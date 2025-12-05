@@ -1,10 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 
-# TODO: make workflows use dynamic lib
-# string(FIND "${VCPKG_TARGET_TRIPLET}" "dynamic" DYNAMIC_INDEX)
-# if(DYNAMIC_INDEX EQUAL -1)
-#     message(FATAL_ERROR "VCPKG_TARGET_TRIPLET='${VCPKG_TARGET_TRIPLET}'; must dynamically link for LGPL compliance")
-# endif()
+string(FIND "${VCPKG_TARGET_TRIPLET}" "dynamic" DYNAMIC_INDEX)
+if(DYNAMIC_INDEX EQUAL -1)
+    message(FATAL_ERROR "VCPKG_TARGET_TRIPLET='${VCPKG_TARGET_TRIPLET}'; must dynamically link for LGPL compliance")
+endif()
 
 project(ki_cas_number VERSION 0.0.1 LANGUAGES CXX)
 
