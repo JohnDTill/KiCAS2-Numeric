@@ -39,7 +39,7 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            apt install m4 autoconf automake libtool
+            brew install m4 autoconf automake libtool
           fi
 
       - name: Install and run vcpkg
