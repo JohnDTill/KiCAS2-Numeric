@@ -12,6 +12,6 @@
     }
   ],
   "overlay-triplets": [
-    "vcpkg/triplets"
+    "vcpkg_customisations/triplets"
   ]
 }
