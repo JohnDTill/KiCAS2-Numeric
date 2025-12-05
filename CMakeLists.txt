@@ -1,22 +1,19 @@
 cmake_minimum_required(VERSION 3.5)
 
+# TODO: make workflows use dynamic lib
+# string(FIND "${VCPKG_TARGET_TRIPLET}" "dynamic" DYNAMIC_INDEX)
+# if(DYNAMIC_INDEX EQUAL -1)
+#     message(FATAL_ERROR "VCPKG_TARGET_TRIPLET='${VCPKG_TARGET_TRIPLET}'; must dynamically link for LGPL compliance")
+# endif()
+
 project(ki_cas_number VERSION 0.0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(PkgConfig REQUIRED)
-# pkg_check_modules(gmp REQUIRED IMPORTED_TARGET gmp)  # TODO: probably delete
-
-if(UNIX)  # Linux/macOS
-    # On Linux/macOS, the vcpkg Flint port provides a CMake config
-    find_package(Flint REQUIRED)
-elseif(MINGW)
-    # On Windows, Flint has no CMake config or pkg-config. Need to handle manually.
-    set(FLINT_ROOT "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-mingw-static")  # TODO: this must dynamically link
-    include_directories("${FLINT_ROOT}/include")
-    link_directories("${FLINT_ROOT}/lib")
-endif()
+set(FLINT_ROOT "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
+include_directories("${FLINT_ROOT}/include")
+link_directories("${FLINT_ROOT}/lib")
 
 set(SRC_FILES
     src/ki_cas_number.cpp
@@ -25,14 +22,7 @@ set(SRC_FILES
 
 add_library(ki_cas_number SHARED ${SRC_FILES})
 
-# target_link_libraries(ki_cas_number PRIVATE PkgConfig::gmp)  # TODO: probably delete
-# Flint and all its dependencies must be manually linked
-
-if(UNIX)
-    target_link_libraries(ki_cas_number PRIVATE Flint::flint)
-elseif(MINGW)
-    target_link_libraries(ki_cas_number PRIVATE flint gmp mpfr)
-endif()
+target_link_libraries(ki_cas_number PRIVATE flint gmp mpfr)
 
 set_target_properties(ki_cas_number PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(ki_cas_number PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})

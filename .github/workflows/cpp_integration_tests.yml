@@ -13,7 +13,7 @@ jobs:
           - os: macos-latest
             compiler: clang
           - os: windows-latest
-            compiler: msvc
+            compiler: mingw
           - os: ubuntu-latest
             compiler: gcc
             arch: x86
@@ -21,7 +21,7 @@ jobs:
             compiler: clang
             arch: x86
           - os: windows-latest
-            compiler: msvc
+            compiler: mingw
             arch: x86
 
     runs-on: ${{ matrix.os }}
@@ -36,6 +36,12 @@ jobs:
       - name: Configure, Build, and Test
         shell: bash
         run: |
+          if [[ "${{ matrix.compiler }}" == "mingw" ]]; then
+            # Force MinGW tools
+            export CC=x86_64-w64-mingw32-gcc
+            export CXX=x86_64-w64-mingw32-g++
+          fi
+
           CMAKE_FLAGS=""
           if [ "$ARCH" = "x86" ]; then
             if [ "$RUNNER_OS" = "Windows" ]; then
