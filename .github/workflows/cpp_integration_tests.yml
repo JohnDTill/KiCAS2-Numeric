@@ -17,14 +17,14 @@ jobs:
             triplet: x64-osx-dynamic
           - os: windows-latest
             compiler: msvc
-            triplet: x64-windows-dynamic
+            triplet: x64-windows
           - os: windows-latest
             compiler: msvc
             arch: x86
-            triplet: x86-windows-dynamic
-          - os: windows-latest
-            compiler: mingw
-            triplet: x64-mingw-dynamic
+            triplet: x86-windows
+          # - os: windows-latest
+          #   compiler: mingw
+          #   triplet: x64-mingw-dynamic
           # - os: ubuntu-latest
           #   compiler: gcc
           #   arch: x86
