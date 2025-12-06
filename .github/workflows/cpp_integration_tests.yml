@@ -3,7 +3,7 @@ on: push
 jobs:
   build-and-test:
     strategy:
-      fail-fast: true  # TODO: disable again
+      fail-fast: false  # TODO: disable again
       matrix:
         include:
           - os: ubuntu-latest
@@ -52,7 +52,7 @@ jobs:
             brew install m4 autoconf automake libtool
           fi
 
-      - name: Install and run vcpkg
+      - name: Install vcpkg
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: '${GITHUB_WORKSPACE}/vcpkg.json'
