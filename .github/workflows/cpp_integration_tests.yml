@@ -17,11 +17,11 @@ jobs:
             triplet: x64-osx-dynamic
           - os: windows-latest
             compiler: msvc
-            triplet: x64-windows
+            triplet: x64-windows-dynamic
           - os: windows-latest
             compiler: msvc
             arch: x86
-            triplet: x86-windows
+            triplet: x86-windows-dynamic
           # - os: windows-latest
           #   compiler: mingw
           #   triplet: x64-mingw-dynamic  # EVENTUALLY: get MinGW working
