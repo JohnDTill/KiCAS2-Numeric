@@ -57,11 +57,11 @@ jobs:
         with:
           vcpkgJsonGlob: '${GITHUB_WORKSPACE}/vcpkg.json'
 
-      - uses: actions/cache@v4
-        id: cache-packages
+      - name: Cache vcpkg packages
+        uses: actions/cache@v4
         with:
           path: ${VCPKG_INSTALLED_DIR}
-          key: cache-${{ matrix.triplet }}-${{ hashFiles( ${GITHUB_WORKSPACE}/vcpkg.json }}
+          key: cache-${{ matrix.triplet }}-${{ hashFiles( vcpkg.json }}
           restore-keys: |
             cache-${{ matrix.triplet }}-
 
