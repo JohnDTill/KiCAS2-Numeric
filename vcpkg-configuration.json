@@ -13,8 +13,5 @@
   ],
   "overlay-triplets": [
     "vcpkg_customisations/triplets"
-  ],
-  "default": {
-    "buildType": "release"
-  }
+  ]
 }
