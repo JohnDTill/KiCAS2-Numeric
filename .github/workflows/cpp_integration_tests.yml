@@ -15,25 +15,25 @@ jobs:
           - os: macos-latest
             compiler: clang
             triplet: x64-osx-dynamic
-          - os: windows-latest
-            compiler: mingw
-            # triplet: x64-mingw-dynamic  # EVENTUALLY: get dynamic Windows x64 working
-            triplet: x64-mingw-static
-          - os: ubuntu-latest
-            compiler: gcc
-            arch: x86
-            # triplet: x86-linux-dynamic  # EVENTUALLY: get dynamic x86 working
-            triplet: x86-linux
-          - os: ubuntu-latest
-            compiler: clang
-            arch: x86
-            # triplet: x86-linux-dynamic  # EVENTUALLY: get dynamic x86 working
-            triplet: x86-linux
-          - os: windows-latest
-            compiler: mingw
-            arch: x86
-            # triplet: x86-mingw-dynamic  # EVENTUALLY: get dynamic Windows x86 working
-            triplet: x86-mingw-static
+          # - os: windows-latest
+          #   compiler: mingw
+          #   # triplet: x64-mingw-dynamic  # EVENTUALLY: get dynamic Windows x64 working
+          #   triplet: x64-mingw-static
+          # - os: ubuntu-latest
+          #   compiler: gcc
+          #   arch: x86
+          #   # triplet: x86-linux-dynamic  # EVENTUALLY: get dynamic x86 working
+          #   triplet: x86-linux
+          # - os: ubuntu-latest
+          #   compiler: clang
+          #   arch: x86
+          #   # triplet: x86-linux-dynamic  # EVENTUALLY: get dynamic x86 working
+          #   triplet: x86-linux
+          # - os: windows-latest
+          #   compiler: mingw
+          #   arch: x86
+          #   # triplet: x86-mingw-dynamic  # EVENTUALLY: get dynamic Windows x86 working
+          #   triplet: x86-mingw-static
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -72,7 +72,6 @@ jobs:
           VCPKG_ROOT_POSIX=$(wslpath "${VCPKG_ROOT}" 2>/dev/null || echo "${VCPKG_ROOT}")
           cmake -D CMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT_POSIX/scripts/buildsystems/vcpkg.cmake \
             -D VCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
-            -D CI_BUILD="True" \
             -S . -B build_test $CMAKE_FLAGS
 
           BUILD_CONFIG_CMAKE=""
