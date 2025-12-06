@@ -22,9 +22,9 @@ jobs:
             compiler: msvc
             arch: x86
             triplet: x86-windows
-          # - os: windows-latest
-          #   compiler: mingw
-          #   triplet: x64-mingw-dynamic
+          - os: windows-latest
+            compiler: mingw
+            triplet: x64-mingw-dynamic
           # - os: ubuntu-latest
           #   compiler: gcc
           #   arch: x86
@@ -48,12 +48,15 @@ jobs:
       - name: Setup
         shell: bash
         run: |
-          if [[ "${{ matrix.compiler }}" == "gcc" || "${{ matrix.compiler }}" == "mingw" ]]; then
+          if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
             export CC=gcc
             export CXX=g++
           elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
             export CC=clang
             export CXX=clang++
+          elif [[ "${{ matrix.compiler }}" == "mingw" ]]; then
+            export CC=x86_64-w64-mingw32-gcc
+            export CXX=x86_64-w64-mingw32-g++
           fi
 
       - name: Apt dependencies
