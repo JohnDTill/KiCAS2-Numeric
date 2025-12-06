@@ -48,7 +48,7 @@ jobs:
       - name: Setup
         shell: bash
         run: |
-          if [[ "${{ matrix.compiler }}" == "gcc" ]  || [ "${{ matrix.compiler }}" == "mingw" ]]; then
+          if [[ "${{ matrix.compiler }}" == "gcc" || "${{ matrix.compiler }}" == "mingw" ]]; then
             export CC=gcc
             export CXX=g++
           elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
