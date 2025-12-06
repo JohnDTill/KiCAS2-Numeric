@@ -17,15 +17,14 @@ jobs:
             triplet: x64-osx-dynamic
           - os: windows-latest
             compiler: msvc
-            triplet: x64-windows
+            triplet: x64-windows-dynamic
           - os: windows-latest
             compiler: msvc
             arch: x86
-            triplet: x86-windows
+            triplet: x86-windows-dynamic
           # - os: windows-latest
           #   compiler: mingw
-          #   # triplet: x64-mingw-dynamic  # EVENTUALLY: get dynamic Windows x64 working
-          #   triplet: x64-mingw-static
+          #   triplet: x64-mingw-dynamic  # EVENTUALLY: get MinGW working
           # - os: ubuntu-latest
           #   compiler: gcc
           #   arch: x86
@@ -46,6 +45,20 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Setup
+        shell: bash
+        run: |
+          if [[ "${{ matrix.compiler }}" == "gcc" ]]; then
+            export CC=gcc
+            export CXX=g++
+          elif [[ "${{ matrix.compiler }}" == "clang" ]]; then
+            export CC=clang
+            export CXX=clang++
+          elif [[ "${{ matrix.compiler }}" == "mingw" ]]; then
+            export CC=x86_64-w64-mingw32-gcc
+            export CXX=x86_64-w64-mingw32-g++
+          fi
+
       - name: Apt dependencies
         shell: bash
         run: |
@@ -53,7 +66,7 @@ jobs:
             brew install m4 autoconf automake libtool
           fi
 
-      - name: Install and run vcpkg
+      - name: Install vcpkg
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: '${GITHUB_WORKSPACE}/vcpkg.json'
