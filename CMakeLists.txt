@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 
 string(FIND "${VCPKG_TARGET_TRIPLET}" "dynamic" DYNAMIC_INDEX)
-if(DYNAMIC_INDEX EQUAL -1)
+string(FIND "${VCPKG_TARGET_TRIPLET}" "windows" WINDOWS_INDEX)
+if(DYNAMIC_INDEX EQUAL -1 AND WINDOWS_INDEX EQUAL -1)
     message(FATAL_ERROR "VCPKG_TARGET_TRIPLET='${VCPKG_TARGET_TRIPLET}'; must dynamically link for LGPL compliance")
 endif()
 
