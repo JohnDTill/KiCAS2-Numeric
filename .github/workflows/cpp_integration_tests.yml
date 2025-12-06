@@ -2,6 +2,8 @@ name: C++ Integration Tests
 on: push
 jobs:
   build-and-test:
+    env:
+      VCPKG_BUILD_TYPE: release
     strategy:
       fail-fast: false
       matrix:
@@ -15,6 +17,13 @@ jobs:
           - os: macos-latest
             compiler: clang
             triplet: x64-osx-dynamic
+          - os: windows-latest
+            compiler: msvc
+            triplet: x64-windows
+          - os: windows-latest
+            compiler: msvc
+            arch: x86
+            triplet: x86-windows
           # - os: windows-latest
           #   compiler: mingw
           #   # triplet: x64-mingw-dynamic  # EVENTUALLY: get dynamic Windows x64 working

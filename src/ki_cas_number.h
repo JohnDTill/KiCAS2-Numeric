@@ -1,6 +1,10 @@
 #ifndef KI_CAS_NUMBER_H
 #define KI_CAS_NUMBER_H
 
+#ifdef _MSC_VER
+#include <malloc.h>
+#endif
+
 #include <cstddef>
 #include <flint/fmpq.h>
 #include <flint/fmpz.h>
