@@ -1,7 +1,7 @@
 name: C++ Integration Tests
 on: push
 jobs:
-  build-and-test:
+  cpp-integration-tests:
     strategy:
       fail-fast: false
       matrix:

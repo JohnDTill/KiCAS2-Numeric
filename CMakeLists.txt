@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
 
-string(FIND "${VCPKG_TARGET_TRIPLET}" "dynamic" DYNAMIC_INDEX)
-if(DYNAMIC_INDEX EQUAL -1)
-    message(FATAL_ERROR "VCPKG_TARGET_TRIPLET='${VCPKG_TARGET_TRIPLET}'; must dynamically link for LGPL compliance")
-endif()
-
 project(ki_cas_number VERSION 0.0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -21,7 +16,13 @@ set(SRC_FILES
 
 add_library(ki_cas_number SHARED ${SRC_FILES})
 
-target_link_libraries(ki_cas_number PRIVATE flint gmp mpfr)
+foreach(X Flint::flint gmp mpfr)
+    add_library(${X} SHARED IMPORTED)
+    get_target_property(is_shared ${X} TYPE)
+    if(NOT is_shared STREQUAL "SHARED_LIBRARY")
+        message(FATAL_ERROR "Must dynamically link ${X} for LGPL compliance with Forscape's license")
+    endif()
+endforeach()
 
 set_target_properties(ki_cas_number PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(ki_cas_number PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
