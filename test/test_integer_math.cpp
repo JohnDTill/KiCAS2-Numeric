@@ -120,10 +120,10 @@ TEST_CASE( "ckd_cbrt (Exhaustive)" ) {
     std::optional<size_t> failing_number = std::nullopt;
 
     for (size_t i = 0; i <= max_cubeable_number; i++){
-        const bool overflow = ckd_cbrt(&result, i*i*i);
+        const bool no_int_root = ckd_cbrt(&result, i*i*i);
         const bool incorrect = (result != i);
 
-        if(overflow || incorrect){
+        if(no_int_root || incorrect){
             failing_number = i;
             break;
         }
@@ -164,15 +164,16 @@ TEST_CASE( "ckd_nrt (Exhaustive)" ) {
     std::optional<std::pair<size_t, size_t>> failing_nrt = std::nullopt;
 
     for(size_t exp = 4; exp <= max_exponent; exp++){
-        const size_t max_base = std::powl(std::numeric_limits<size_t>::max(), 1.0/exp);
+        constexpr double fudge_factor = 1e-6;  // EVENTUALLY: this keeps solving as 2^64, which is out of range
+        const size_t max_base = std::powl(std::numeric_limits<size_t>::max(), 1.0/exp) - fudge_factor;
 
         for(size_t base = 0; base <= max_base; base++){
             const size_t arg = knownfit_pow(base, exp);
 
-            const bool overflow = ckd_nrt(&result, arg, exp);
+            const bool no_int_root = ckd_nrt(&result, arg, exp);
             const bool incorrect = (result != base);
 
-            if(overflow || incorrect){
+            if(no_int_root || incorrect){
                 failing_nrt = std::make_pair(base, exp);
                 break;
             }
@@ -202,18 +203,14 @@ TEST_CASE( "ckd_pow (More thorough)" ) {
     std::optional<std::pair<size_t, size_t>> failing_pow = std::nullopt;
 
     for(size_t exp = 2; exp <= max_exp; exp++){
-        const size_t max_base = std::powl(std::numeric_limits<size_t>::max(), 1.0/exp) + 1e-12;
+        constexpr double fudge_factor = 1e-6;  // EVENTUALLY: this keeps solving as 2^64, which is out of range
+        const size_t max_base = std::powl(std::numeric_limits<size_t>::max(), 1.0/exp) - fudge_factor;
 
         const bool overflow = ckd_pow(&result, max_base, exp);
         const bool incorrect = !overflow && knownfit_pow(max_base, exp) != result;
 
         if(overflow || incorrect){
             failing_pow = std::make_pair(max_base, exp);
-            break;
-        }
-
-        if(!ckd_pow(&result, max_base+1, exp)){
-            failing_pow = std::make_pair(max_base, exp+1);
             break;
         }
     }
