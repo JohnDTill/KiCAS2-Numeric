@@ -75,15 +75,6 @@ jobs:
             brew install m4 autoconf automake libtool
           fi
 
-      - name: Cache vcpkg build
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/vcpkg
-            ${GITHUB_WORKSPACE}/build_test/vcpkg_installed
-            ${GITHUB_WORKSPACE}/build_test/buildtrees
-          key: vcpkg-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}
-
       - name: Install vcpkg
         uses: lukka/run-vcpkg@v11
         with:
@@ -91,6 +82,16 @@ jobs:
         env:
           VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
           VCPKG_DEFAULT_HOST_TRIPLET: ${{ matrix.triplet }}
+
+      - name: Cache vcpkg build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/vcpkg
+            ${VCPKG_ROOT}/vcpkg_installed
+            ${VCPKG_ROOT}/buildtrees
+            ${VCPKG_ROOT}/packages
+          key: vcpkg-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}
 
       - name: Configure, Build, and Test
         shell: bash
