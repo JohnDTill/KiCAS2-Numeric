@@ -10,6 +10,8 @@ include_directories("${FLINT_ROOT}/include")
 link_directories("${FLINT_ROOT}/lib")
 
 set(SRC_FILES
+    src/ki_cas_integer_math.h
+    src/ki_cas_integer_math.cpp
     src/ki_cas_number.cpp
     src/ki_cas_number.h
 )
@@ -32,9 +34,13 @@ install(TARGETS ki_cas_number
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Testing setup
+find_package(catch2 CONFIG REQUIRED)
+
 enable_testing()
-add_executable(IntegrationTests test/test_driver.cpp ${SRC_FILES})
+add_executable(IntegrationTests ${SRC_FILES}
+    test/test_integer_math.cpp)
 target_include_directories(IntegrationTests PUBLIC src)
 get_target_property(LIBS ki_cas_number LINK_LIBRARIES)
 target_link_libraries(IntegrationTests PRIVATE ${LINK_LIBRARIES})
+target_link_libraries(IntegrationTests PRIVATE Catch2::Catch2WithMain)
 add_test(NAME IntegrationTests COMMAND IntegrationTests)
