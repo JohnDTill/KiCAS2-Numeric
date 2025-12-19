@@ -2,6 +2,8 @@
 
 #include "../src/ki_cas_integer_math.h"
 
+#include <cmath>
+#include <limits>
 #include <optional>
 
 using namespace KiCAS2;
