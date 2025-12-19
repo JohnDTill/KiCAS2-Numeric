@@ -68,15 +68,6 @@ jobs:
             export CXX=x86_64-w64-mingw32-g++
           fi
 
-          CMAKE_FLAGS=""
-          if [ "${{ matrix.arch }}" = "x86" ]; then
-            if [ "$RUNNER_OS" = "Windows" ]; then
-              CMAKE_FLAGS="-A Win32"
-            else 
-              CMAKE_FLAGS="-D CMAKE_C_FLAGS=-m32 -D CMAKE_CXX_FLAGS=-m32"
-            fi
-          fi
-
       - name: Apt dependencies
         shell: bash
         run: |
@@ -95,11 +86,21 @@ jobs:
       - name: Configure, Build, and Test
         shell: bash
         run: |
+          CMAKE_FLAGS=()
+          if [ "${{ matrix.arch }}" = "x86" ]; then
+            if [ "$RUNNER_OS" = "Windows" ]; then
+              CMAKE_FLAGS+=("-A" "Win32")
+            else
+              CMAKE_FLAGS+=("-D" "CMAKE_C_FLAGS=-m32" "-D" "CMAKE_CXX_FLAGS=-m32")
+            fi
+          fi
+
+          echo "CMake will be invoked with flags: ${CMAKE_FLAGS[@]}"
+
           VCPKG_ROOT_POSIX=$(wslpath "${VCPKG_ROOT}" 2>/dev/null || echo "${VCPKG_ROOT}")
           cmake -D CMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT_POSIX/scripts/buildsystems/vcpkg.cmake \
             -D VCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
-            -D VCPKG_INSTALLED_DIR=${{ github.workspace }}/vcpkg_installed/${{ matrix.triplet }} \
-            -S . -B build_test $CMAKE_FLAGS
+            -S . -B build_test "${CMAKE_FLAGS[@]}"
 
           BUILD_CONFIG_CMAKE=""
           BUILD_CONFIG_CTEST=""
