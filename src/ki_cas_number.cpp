@@ -54,6 +54,7 @@ void Number::Data::setDenominator(size_t val) noexcept {
     data.machine_rational.denominator = val;
 }
 
+#ifndef NDEBUG
 bool Number::Data::isPosInt() const noexcept {
     return tag == PosInt;
 }
@@ -69,5 +70,6 @@ bool Number::Data::isMachineInt() const noexcept {
 bool Number::Data::isMachineRat() const noexcept {
     return tag == PosRat || tag == NegRat;
 }
+#endif
 
 }
