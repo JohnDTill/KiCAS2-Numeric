@@ -111,7 +111,7 @@ jobs:
           fi
 
           # Need to reset since this is overwritten by installation
-          export VCPKG_DEFAULT_BINARY_CACHE=${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          export VCPKG_DEFAULT_BINARY_CACHE=${{ github.workspace }}/vcpkg_binary_cache
           echo "Default binary cache: ${VCPKG_DEFAULT_BINARY_CACHE}"
 
           VCPKG_ROOT_POSIX=$(wslpath "${VCPKG_ROOT}" 2>/dev/null || echo "${VCPKG_ROOT}")
