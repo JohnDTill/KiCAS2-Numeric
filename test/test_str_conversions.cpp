@@ -47,6 +47,7 @@ TEST_CASE( "ckd_str2int" ) {
 
 TEST_CASE( "fmpz_set_str_NULL_TERMINATED_SOURCE__NOT_THREADSAFE" ) {
     fmpz_t big_int;
+    fmpz_init(big_int);
     fmpz_set_str_NULL_TERMINATED_SOURCE__NOT_THREADSAFE(big_int, std::string("0"));
     REQUIRE(fmpz_get_si(big_int) == 0);
 
@@ -54,6 +55,7 @@ TEST_CASE( "fmpz_set_str_NULL_TERMINATED_SOURCE__NOT_THREADSAFE" ) {
     REQUIRE(fmpz_get_si(big_int) == 42);
 
     fmpz_t factorial_of_30;
+    fmpz_init(factorial_of_30);
     fmpz_fac_ui(factorial_of_30, 30);
     fmpz_set_str_NULL_TERMINATED_SOURCE__NOT_THREADSAFE(big_int, std::string("265252859812191058636308480000000"));
     REQUIRE(fmpz_cmp(big_int, factorial_of_30) == 0);
