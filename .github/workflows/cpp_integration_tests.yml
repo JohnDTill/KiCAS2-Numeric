@@ -52,9 +52,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       X_VCPKG_ASSET_SOURCES_DIR: ${{ github.workspace }}/vcpkg_asset_cache
-      X_VCPKG_ASSET_SOURCES: x-azurl,file://${X_VCPKG_ASSET_SOURCES_DIR}
+      X_VCPKG_ASSET_SOURCES: x-azurl,file://${{ github.workspace }}/vcpkg_asset_cache
       VCPKG_BINARY_SOURCES_DIR: ${{ github.workspace }}/vcpkg_binary_cache
-      VCPKG_BINARY_SOURCES: clear;files,${VCPKG_BINARY_SOURCES_DIR}
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg_binary_cache
     steps:
       - uses: actions/checkout@v6
 
