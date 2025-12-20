@@ -83,7 +83,7 @@ jobs:
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: '${GITHUB_WORKSPACE}/vcpkg.json'
-          # doNotCache: false  # TODO: enable this
+          doNotCache: false
         env:
           VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
           VCPKG_DEFAULT_HOST_TRIPLET: ${{ matrix.triplet }}
@@ -94,7 +94,7 @@ jobs:
           path: ${{ github.workspace }}/vcpkg_binary_cache
           key: vcpkg-binaries-cache-${{ matrix.compiler }}-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}
 
-      - name: Configure, Build, and Test
+      - name: Configure
         shell: bash
         env:
           # Need to reset since this is overwritten by installation
@@ -115,6 +115,9 @@ jobs:
             -D VCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
             -S . -B build_test "${CMAKE_FLAGS[@]}"
 
+      - name: Build
+        shell: bash
+        run: |
           BUILD_CONFIG_CMAKE=""
           BUILD_CONFIG_CTEST=""
           if [ "$RUNNER_OS" = "Windows" ]; then
@@ -123,4 +126,7 @@ jobs:
           fi
 
           cmake --build build_test --target IntegrationTests $BUILD_CONFIG_CMAKE
-          ctest --test-dir build_test -V $BUILD_CONFIG_CTEST
+
+      - name: Test
+        shell: bash
+        run: ctest --test-dir build_test -V $BUILD_CONFIG_CTEST
