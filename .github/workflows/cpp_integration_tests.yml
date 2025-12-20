@@ -53,8 +53,6 @@ jobs:
     env:
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_binary_cache
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg_binary_cache
-      X_VCPKG_ASSET_SOURCES_CACHE: ${{ github.workspace }}/vcpkg_asset_cache
-      X_VCPKG_ASSET_SOURCES: x-azurl,file://${{ github.workspace }}/vcpkg_asset_cache
     steps:
       - uses: actions/checkout@v6
 
@@ -94,10 +92,8 @@ jobs:
       - name: Cache vcpkg build
         uses: actions/cache@v5
         with:
-          # ${X_VCPKG_ASSET_SOURCES_CACHE}
-          path: |
-            ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-          key: vcpkg-${{ matrix.compiler }}-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}
+          path: ${{ github.workspace }}/vcpkg_binary_cache
+          key: vcpkg-binary-${{ matrix.compiler }}-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}
 
       - name: Configure, Build, and Test
         shell: bash
@@ -113,8 +109,6 @@ jobs:
               CMAKE_FLAGS+=("-D" "CMAKE_C_FLAGS=-m32" "-D" "CMAKE_CXX_FLAGS=-m32")
             fi
           fi
-
-          echo "Default binary cache: ${VCPKG_DEFAULT_BINARY_CACHE}"
 
           VCPKG_ROOT_POSIX=$(wslpath "${VCPKG_ROOT}" 2>/dev/null || echo "${VCPKG_ROOT}")
           cmake -D CMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT_POSIX/scripts/buildsystems/vcpkg.cmake \
