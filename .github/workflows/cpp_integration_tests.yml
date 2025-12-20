@@ -50,9 +50,6 @@ jobs:
           #   # triplet: x86-mingw-dynamic  # EVENTUALLY: get dynamic Windows x86 working
           #   triplet: x86-mingw-static
     runs-on: ${{ matrix.os }}
-    env:
-      VCPKG_BINARY_SOURCES: ${{ github.workspace }}/vcpkg_binary_cache
-      X_VCPKG_ASSET_SOURCES: x-azurl,file://${{ github.workspace }}/vcpkg_asset_cache
     steps:
       - uses: actions/checkout@v6
 
@@ -70,7 +67,9 @@ jobs:
             export CXX=x86_64-w64-mingw32-g++
           fi
 
-          mkdir -m 664 ${{ github.workspace }}/vcpkg_asset_cache
+          mkdir -m 664 ${GITHUB_WORKSPACE}/vcpkg_asset_cache
+          export VCPKG_BINARY_SOURCES=${GITHUB_WORKSPACE}/vcpkg_binary_cache
+          export X_VCPKG_ASSET_SOURCES=x-azurl,file://${GITHUB_WORKSPACE}/vcpkg_asset_cache
 
       - name: Apt dependencies
         shell: bash
