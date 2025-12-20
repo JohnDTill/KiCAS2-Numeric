@@ -72,6 +72,7 @@ jobs:
             export CXX=x86_64-w64-mingw32-g++
           fi
 
+          mkdir ${GITHUB_WORKSPACE}/vcpkg_binary_cache
           mkdir ${GITHUB_WORKSPACE}/vcpkg_asset_cache
 
       - name: Apt dependencies
@@ -91,7 +92,7 @@ jobs:
           VCPKG_DEFAULT_HOST_TRIPLET: ${{ matrix.triplet }}
 
       - name: Cache vcpkg build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           # ${X_VCPKG_ASSET_SOURCES_CACHE}
           path: |
