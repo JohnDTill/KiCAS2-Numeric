@@ -51,9 +51,10 @@ jobs:
           #   triplet: x86-mingw-static
     runs-on: ${{ matrix.os }}
     env:
-      VCPKG_ASSET_SOURCES: ${GITHUB_WORKSPACE}/vcpkg_asset_cache
-      X_VCPKG_ASSET_SOURCES: x-azurl,file://${VCPKG_ASSET_SOURCES}
-      VCPKG_BINARY_SOURCES: ${GITHUB_WORKSPACE}/vcpkg_binary_cache
+      X_VCPKG_ASSET_SOURCES_DIR: ${{ github.workspace }}/vcpkg_asset_cache
+      X_VCPKG_ASSET_SOURCES: x-azurl,file://${X_VCPKG_ASSET_SOURCES_DIR}
+      VCPKG_BINARY_SOURCES_DIR: ${{ github.workspace }}/vcpkg_binary_cache
+      VCPKG_BINARY_SOURCES: clear;files,${VCPKG_BINARY_SOURCES_DIR}
     steps:
       - uses: actions/checkout@v6
 
@@ -93,8 +94,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ${VCPKG_BINARY_SOURCES}
-            ${VCPKG_ASSET_SOURCES}
+            ${VCPKG_BINARY_SOURCES_DIR}
+            ${X_VCPKG_ASSET_SOURCES_DIR}
           key: vcpkg-${{ matrix.compiler }}-${{ matrix.triplet }}-${{ hashFiles('vcpkg.json') }}
 
       - name: Configure, Build, and Test
