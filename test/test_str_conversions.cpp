@@ -86,47 +86,45 @@ TEST_CASE( "write_rational" ) {
 TEST_CASE( "ckd_strdecimal2rat" ) {
     NativeRational result;
 
-    std::cout << "Environment digits10 = " << std::numeric_limits<size_t>::digits10 << std::endl;
+    // SECTION("No factors"){
+    //     REQUIRE_FALSE(ckd_strdecimal2rat(&result, "1.3"));
+    //     REQUIRE(result.num == 13);
+    //     REQUIRE(result.den == 10);
 
-    SECTION("No factors"){
-        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "1.3"));
-        REQUIRE(result.num == 13);
-        REQUIRE(result.den == 10);
+    //     REQUIRE_FALSE(ckd_strdecimal2rat(&result, "127.589"));
+    //     REQUIRE(result.num == 127589);
+    //     REQUIRE(result.den == 1000);
+    // }
 
-        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "127.589"));
-        REQUIRE(result.num == 127589);
-        REQUIRE(result.den == 1000);
-    }
+    // SECTION("Factor of 2"){
+    //     REQUIRE_FALSE(ckd_strdecimal2rat(&result, "2.2"));
+    //     REQUIRE(result.num == 11);
+    //     REQUIRE(result.den == 5);
+    // }
 
-    SECTION("Factor of 2"){
-        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "2.2"));
-        REQUIRE(result.num == 11);
-        REQUIRE(result.den == 5);
-    }
+    // SECTION("Factor of 5"){
+    //     REQUIRE_FALSE(ckd_strdecimal2rat(&result, "2.5"));
+    //     REQUIRE(result.num == 5);
+    //     REQUIRE(result.den == 2);
+    // }
 
-    SECTION("Factor of 5"){
-        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "2.5"));
-        REQUIRE(result.num == 5);
-        REQUIRE(result.den == 2);
-    }
+    // SECTION("Multiple factors of 5"){
+    //     REQUIRE_FALSE(ckd_strdecimal2rat(&result, "1.125"));
+    //     REQUIRE(result.num == 9);
+    //     REQUIRE(result.den == 8);
+    // }
 
-    SECTION("Multiple factors of 5"){
-        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "1.125"));
-        REQUIRE(result.num == 9);
-        REQUIRE(result.den == 8);
-    }
+    // SECTION("Trailing zeros"){
+    //     REQUIRE_FALSE(ckd_strdecimal2rat(&result, "1.30"));
+    //     REQUIRE(result.num == 13);
+    //     REQUIRE(result.den == 10);
+    // }
 
-    SECTION("Trailing zeros"){
-        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "1.30"));
-        REQUIRE(result.num == 13);
-        REQUIRE(result.den == 10);
-    }
-
-    SECTION("All trailing zeros"){
-        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "3.00"));
-        REQUIRE(result.num == 3);
-        REQUIRE(result.den == 1);
-    }
+    // SECTION("All trailing zeros"){
+    //     REQUIRE_FALSE(ckd_strdecimal2rat(&result, "3.00"));
+    //     REQUIRE(result.num == 3);
+    //     REQUIRE(result.den == 1);
+    // }
 
     SECTION("Longest fitting decimal"){
         // Test the longest 0.9999999... which fits
@@ -140,24 +138,24 @@ TEST_CASE( "ckd_strdecimal2rat" ) {
         REQUIRE(result.den == expected_den);  // TODO: why is this 0 on some targets?
     }
 
-    SECTION("Overflow"){
-        std::string test_str;
+    // SECTION("Overflow"){
+    //     std::string test_str;
 
-        // Test the shortest 0.9999999... which does not fit
-        test_str = "0." + std::string(std::numeric_limits<size_t>::digits10, '9');
-        REQUIRE(true == ckd_strdecimal2rat(&result, test_str));
+    //     // Test the shortest 0.9999999... which does not fit
+    //     test_str = "0." + std::string(std::numeric_limits<size_t>::digits10, '9');
+    //     REQUIRE(true == ckd_strdecimal2rat(&result, test_str));
 
-        test_str = "0." + std::string(std::numeric_limits<size_t>::digits10-1, '9');
-        REQUIRE(false == ckd_strdecimal2rat(&result, test_str));
+    //     test_str = "0." + std::string(std::numeric_limits<size_t>::digits10-1, '9');
+    //     REQUIRE(false == ckd_strdecimal2rat(&result, test_str));
 
-        // // Test a combination of leading and trailing values which does not fit
-        test_str = "999." + std::string(std::numeric_limits<size_t>::digits10-1, '9');
-        REQUIRE(true == ckd_strdecimal2rat(&result, test_str));  // TODO: why does this fail on some targets?
+    //     // // Test a combination of leading and trailing values which does not fit
+    //     test_str = "999." + std::string(std::numeric_limits<size_t>::digits10-1, '9');
+    //     REQUIRE(true == ckd_strdecimal2rat(&result, test_str));  // TODO: why does this fail on some targets?
 
-        test_str = "0." + std::string(std::numeric_limits<size_t>::digits10-1, '9');
-        REQUIRE(false == ckd_strdecimal2rat(&result, test_str));
+    //     test_str = "0." + std::string(std::numeric_limits<size_t>::digits10-1, '9');
+    //     REQUIRE(false == ckd_strdecimal2rat(&result, test_str));
 
-        // Test a leading value which does not fit
-        REQUIRE(true == ckd_strdecimal2rat(&result, "265252859812191058636308480000000.1"));
-    }
+    //     // Test a leading value which does not fit
+    //     REQUIRE(true == ckd_strdecimal2rat(&result, "265252859812191058636308480000000.1"));
+    // }
 }

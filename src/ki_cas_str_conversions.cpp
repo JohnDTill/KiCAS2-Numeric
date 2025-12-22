@@ -5,6 +5,8 @@
 #include "ki_cas_integer_math.h"
 #include <limits>
 
+#include <iostream>  // TODO: delete
+
 namespace KiCAS2 {
 
 void write_int(std::string& str, size_t val) {
@@ -101,7 +103,7 @@ bool ckd_strdecimal2rat(NativeRational* result, std::string_view str_lead, std::
 
     // a.b = a + b/10^len(b)
 
-    constexpr size_t powers_of_ten[std::numeric_limits<size_t>::digits10] = {
+    constexpr size_t powers_of_ten[] = {
         1,
         10,
         100,
@@ -111,7 +113,7 @@ bool ckd_strdecimal2rat(NativeRational* result, std::string_view str_lead, std::
         1000000,
         10000000,
         100000000,
-        #if defined(__x86_64) || defined( _WIN64 )  // 64-bit
+        #if defined(__x86_64__) || defined(__aarch64__) || defined( _WIN64 )  // 64-bit
         1000000000,
         10000000000,
         100000000000,
@@ -126,16 +128,23 @@ bool ckd_strdecimal2rat(NativeRational* result, std::string_view str_lead, std::
     };
     size_t den = powers_of_ten[str_trail.size()];
 
+    // Check this rather than specify it to make sure the macro worked
+    static_assert(sizeof(powers_of_ten)/sizeof(size_t) == std::numeric_limits<size_t>::digits10);
+
     // The factors of the denominator are:
     //   Up to one instance of 2
     //   Arbitrarily many instances of 5
     //
     // Since the factors of the denominator are known, reducing here is cheap
 
+    std::cout << den << std::endl;
+
     // Remove a factor of 2
     const bool is_even = (trail % 2 == 0);
     den >>= is_even;
     trail >>= is_even;
+
+    std::cout << den << std::endl;
 
     // Remove all factors of 5
     // The first factor has a cheap test given the string representation
@@ -144,11 +153,15 @@ bool ckd_strdecimal2rat(NativeRational* result, std::string_view str_lead, std::
         trail /= 5;
         den /= 5;
 
+        std::cout << den << std::endl;
+
         size_t trail_div_5 = trail / 5;
         size_t trail_mod_5 = trail % 5;
         while(trail_mod_5 == 0){
             trail = trail_div_5;
             den /= 5;
+
+            std::cout << den << std::endl;
 
             trail_div_5 = trail / 5;
             trail_mod_5 = trail % 5;

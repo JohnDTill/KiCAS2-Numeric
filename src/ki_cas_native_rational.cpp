@@ -4,7 +4,7 @@
 #include <cassert>
 #include <numeric>
 
-#if !defined(__x86_64) && !defined(__aarch64__) && !defined(_WIN64)  // 32-bit
+#if !defined(__x86_64__) && !defined(__aarch64__) && !defined(_WIN64)  // 32-bit
 static_assert(sizeof(size_t)*8 == 32);
 #include <cstdint>
 #endif
@@ -125,7 +125,7 @@ bool operator==(NativeRational a, NativeRational b) noexcept {
 
     return a_num_times_b_den_high == b_num_times_a_den_high
            && a_num_times_b_den_low == b_num_times_a_den_low;
-#elif defined(__x86_64) || defined(__aarch64__)  // 64-bit GCC or Clang
+#elif defined(__x86_64__) || defined(__aarch64__)  // 64-bit GCC or Clang
     return static_cast<__uint128_t>(a.num) * static_cast<__uint128_t>(b.den)
            == static_cast<__uint128_t>(b.num) * static_cast<__uint128_t>(a.den);
 #else  // 32-bit
@@ -151,7 +151,7 @@ bool operator>(NativeRational a, NativeRational b) noexcept {
 
     return a_num_times_b_den_high > b_num_times_a_den_high
            || (a_num_times_b_den_high == b_num_times_a_den_high && a_num_times_b_den_low > b_num_times_a_den_low);
-#elif defined(__x86_64) || defined(__aarch64__)  // 64-bit GCC or Clang
+#elif defined(__x86_64__) || defined(__aarch64__)  // 64-bit GCC or Clang
     return static_cast<__uint128_t>(a.num) * static_cast<__uint128_t>(b.den)
            > static_cast<__uint128_t>(b.num) * static_cast<__uint128_t>(a.den);
 #else  // 32-bit
@@ -173,7 +173,7 @@ bool operator>=(NativeRational a, NativeRational b) noexcept {
 
     return a_num_times_b_den_high > b_num_times_a_den_high
            || (a_num_times_b_den_high == b_num_times_a_den_high && a_num_times_b_den_low >= b_num_times_a_den_low);
-#elif defined(__x86_64) || defined(__aarch64__)  // 64-bit GCC or Clang
+#elif defined(__x86_64__) || defined(__aarch64__)  // 64-bit GCC or Clang
     return static_cast<__uint128_t>(a.num) * static_cast<__uint128_t>(b.den)
            >= static_cast<__uint128_t>(b.num) * static_cast<__uint128_t>(a.den);
 #else  // 32-bit
