@@ -64,8 +64,6 @@ NativeRational sub(NativeRational a, size_t b) noexcept;
 /// reduction is performed if required to fit, but the result is NOT canonicalised
 bool ckd_sub(NativeRational* result, size_t a, NativeRational b) noexcept;
 
-// vvv TODO vvv //
-
 /// Returns true if the calculation overflows
 /// Requires a > b, asserts otherwise
 /// reduction is performed if required to fit, but the result is NOT canonicalised

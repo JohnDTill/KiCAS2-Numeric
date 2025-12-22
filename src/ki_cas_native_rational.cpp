@@ -115,17 +115,9 @@ bool operator<=(size_t a, NativeRational b) noexcept {
 
 bool operator==(NativeRational a, NativeRational b) noexcept {
     // a/b == c/d  ⇒  a*d == c*b
+    // Widen so that overflow is never an issue
 
-    // Greedy approach with native types
-    size_t a_num_times_b_den;
-    size_t b_num_times_a_den;
-    const bool a_num_times_b_den_overflow = ckd_mul(&a_num_times_b_den, a.num, b.den);
-    const bool b_num_times_a_den_overflow = ckd_mul(&b_num_times_a_den, b.num, a.den);
-    if(!a_num_times_b_den_overflow || !b_num_times_a_den_overflow)
-        return (a_num_times_b_den == b_num_times_a_den)
-               && (a_num_times_b_den_overflow == b_num_times_a_den_overflow);
-
-    #if defined( _WIN64 )  // 64-bit MSVC
+#if defined( _WIN64 )  // 64-bit MSVC
     size_t a_num_times_b_den_high;
     const size_t a_num_times_b_den_low = _umul128(a.num, b.den, &a_num_times_b_den_high);
     size_t b_num_times_a_den_high;
@@ -133,14 +125,14 @@ bool operator==(NativeRational a, NativeRational b) noexcept {
 
     return a_num_times_b_den_high == b_num_times_a_den_high
            && a_num_times_b_den_low == b_num_times_a_den_low;
-    #elif defined(__x86_64) || defined(__aarch64__)  // 64-bit GCC or Clang
+#elif defined(__x86_64) || defined(__aarch64__)  // 64-bit GCC or Clang
     return static_cast<__uint128_t>(a.num) * static_cast<__uint128_t>(b.den)
            == static_cast<__uint128_t>(b.num) * static_cast<__uint128_t>(a.den);
-    #else  // 32-bit
+#else  // 32-bit
     static_assert(sizeof(size_t)*8 == 32);
     return static_cast<uint64_t>(a.num) * static_cast<uint64_t>(b.den)
            == static_cast<uint64_t>(b.num) * static_cast<uint64_t>(a.den);
-    #endif
+#endif
 }
 
 bool operator!=(NativeRational a, NativeRational b) noexcept {
@@ -148,49 +140,47 @@ bool operator!=(NativeRational a, NativeRational b) noexcept {
 }
 
 bool operator>(NativeRational a, NativeRational b) noexcept {
-    // Greedy approach with only multiplication
     // a/b > c/d  ⇒  a*d > c*b
-    size_t a_num_times_b_den;
-    size_t b_num_times_a_den;
-    const bool a_num_times_b_den_overflow = ckd_mul(&a_num_times_b_den, a.num, b.den);
-    const bool b_num_times_a_den_overflow = ckd_mul(&b_num_times_a_den, b.num, a.den);
-    if(!a_num_times_b_den_overflow || !b_num_times_a_den_overflow)
-        return (a_num_times_b_den > b_num_times_a_den)
-               || a_num_times_b_den_overflow;
+    // Widen so that overflow is never an issue
 
-    // Greedy approach with floating point comparison
-    const double difference = static_cast<double>(a.num) * static_cast<double>(b.den)
-                              - static_cast<double>(b.num) * static_cast<double>(a.den);
-    constexpr double tol = 1e-12;
-    if(difference > tol || difference < -tol) return difference > 0;
+#if defined( _WIN64 )  // 64-bit MSVC
+    size_t a_num_times_b_den_high;
+    const size_t a_num_times_b_den_low = _umul128(a.num, b.den, &a_num_times_b_den_high);
+    size_t b_num_times_a_den_high;
+    const size_t b_num_times_a_den_low = _umul128(b.num, a.den, &b_num_times_a_den_high);
 
-    // Robust approach
-    // TODO: I don't think you can generally answer this without wider types
-
-    return false;
+    return a_num_times_b_den_high > b_num_times_a_den_high
+           || (a_num_times_b_den_high == b_num_times_a_den_high && a_num_times_b_den_low > b_num_times_a_den_low);
+#elif defined(__x86_64) || defined(__aarch64__)  // 64-bit GCC or Clang
+    return static_cast<__uint128_t>(a.num) * static_cast<__uint128_t>(b.den)
+           > static_cast<__uint128_t>(b.num) * static_cast<__uint128_t>(a.den);
+#else  // 32-bit
+    static_assert(sizeof(size_t)*8 == 32);
+    return static_cast<uint64_t>(a.num) * static_cast<uint64_t>(b.den)
+           > static_cast<uint64_t>(b.num) * static_cast<uint64_t>(a.den);
+#endif
 }
 
 bool operator>=(NativeRational a, NativeRational b) noexcept {
-    // Greedy approach with only multiplication
     // a/b ≥ c/d  ⇒  a*d ≥ c*b
-    size_t a_num_times_b_den;
-    size_t b_num_times_a_den;
-    const bool a_num_times_b_den_overflow = ckd_mul(&a_num_times_b_den, a.num, b.den);
-    const bool b_num_times_a_den_overflow = ckd_mul(&b_num_times_a_den, b.num, a.den);
-    if(!a_num_times_b_den_overflow || !b_num_times_a_den_overflow)
-        return (a_num_times_b_den >= b_num_times_a_den)
-               || a_num_times_b_den_overflow;
+    // Widen so that overflow is never an issue
 
-    // Greedy approach with floating point comparison
-    const double difference = static_cast<double>(a.num) * static_cast<double>(b.den)
-                              - static_cast<double>(b.num) * static_cast<double>(a.den);
-    constexpr double tol = 1e-12;
-    if(difference > tol || difference < -tol) return difference >= 0;
+#if defined( _WIN64 )  // 64-bit MSVC
+    size_t a_num_times_b_den_high;
+    const size_t a_num_times_b_den_low = _umul128(a.num, b.den, &a_num_times_b_den_high);
+    size_t b_num_times_a_den_high;
+    const size_t b_num_times_a_den_low = _umul128(b.num, a.den, &b_num_times_a_den_high);
 
-    // Robust approach with division
-    // TODO: I don't think you can generally answer this without wider types
-
-    return false;
+    return a_num_times_b_den_high > b_num_times_a_den_high
+           || (a_num_times_b_den_high == b_num_times_a_den_high && a_num_times_b_den_low >= b_num_times_a_den_low);
+#elif defined(__x86_64) || defined(__aarch64__)  // 64-bit GCC or Clang
+    return static_cast<__uint128_t>(a.num) * static_cast<__uint128_t>(b.den)
+           >= static_cast<__uint128_t>(b.num) * static_cast<__uint128_t>(a.den);
+#else  // 32-bit
+    static_assert(sizeof(size_t)*8 == 32);
+    return static_cast<uint64_t>(a.num) * static_cast<uint64_t>(b.den)
+           >= static_cast<uint64_t>(b.num) * static_cast<uint64_t>(a.den);
+#endif
 }
 
 bool operator<(NativeRational a, NativeRational b) noexcept {
@@ -348,7 +338,35 @@ bool ckd_sub(NativeRational* result, size_t a, NativeRational b) noexcept {
 bool ckd_sub(NativeRational* result, NativeRational a, NativeRational b) noexcept {
     assert(a >= b);
 
-    return false;  // TODO
+    // a/b - c/d = (a*d - b*c) / (b*d)
+    size_t a_num_times_b_den;
+    size_t b_num_times_a_den;
+
+    if(ckd_mul(&result->den, a.den, b.den) == false
+        && ckd_mul(&a_num_times_b_den, a.num, b.den) == false
+        && ckd_mul(&b_num_times_a_den, b.num, a.den) == false){
+        result->num = knownfit_sub(a_num_times_b_den, b_num_times_a_den);
+        return false;
+    }
+
+    a.reduceInPlace();
+    b.reduceInPlace();
+
+    // (b*d) = [ a*(d/gcd(b,d)) + c*(b/gcd(b,d)) ] / [b*(d/gcd(b,d))]
+    const size_t gcd_a_den_b_den = std::gcd(a.den, b.den);
+    if(gcd_a_den_b_den != 1){
+        a.den /= gcd_a_den_b_den;
+        b.den /= gcd_a_den_b_den;
+    }
+
+    if(ckd_mul(&result->den, a.den, b.den * gcd_a_den_b_den) == false
+        && ckd_mul(&a_num_times_b_den, a.num, b.den) == false
+        && ckd_mul(&b_num_times_a_den, b.num, a.den) == false){
+        result->num = knownfit_sub(a_num_times_b_den, b_num_times_a_den);
+        return false;
+    }
+
+    return true;
 }
 
 }  // namespace KiCAS2

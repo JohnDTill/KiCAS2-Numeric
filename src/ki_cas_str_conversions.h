@@ -29,6 +29,12 @@ inline constexpr bool TYPESET_OUTPUT = true;
 template<bool typeset_fraction> void write_rational(std::string& str, NativeRational val);
 
 /// Set an NativeRational from a string. Returns true if the value is too large to fit.
+bool ckd_strdecimal2rat(NativeRational* result, std::string_view str) noexcept;
+
+/// Set an NativeRational from a string. Returns true if the value is too large to fit.
+bool ckd_strdecimal2rat(NativeRational* result, std::string_view str, size_t decimal_index) noexcept;
+
+/// Set an NativeRational from a string. Returns true if the value is too large to fit.
 bool ckd_strdecimal2rat(NativeRational* result, std::string_view str_lead, std::string_view str_trail) noexcept;
 
 }  // namespace KiCAS2

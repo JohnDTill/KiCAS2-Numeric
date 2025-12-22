@@ -70,14 +70,19 @@ TEST_CASE( "NativeRational vs. NativeRational comparisons" ) {
     REQUIRE(!(NativeRational(7,3) < NativeRational(14,6)));
     REQUIRE(NativeRational(7,3) <= NativeRational(14,6));
 
-    // TODO: test args causing overflow
     REQUIRE(!(NativeRational(2, MAX-2) == NativeRational(2, MAX)));
     REQUIRE(NativeRational(2, MAX-2) != NativeRational(2, MAX));
-    // REQUIRE(NativeRational(2, MAX-2) >= NativeRational(2, MAX));
-    // REQUIRE(NativeRational(2, MAX-2) > NativeRational(2, MAX));
+    REQUIRE(NativeRational(2, MAX-2) >= NativeRational(2, MAX));
+    REQUIRE(NativeRational(2, MAX-2) > NativeRational(2, MAX));
+    REQUIRE(NativeRational(2, MAX-2) <= NativeRational(2, MAX-2));
+    REQUIRE(NativeRational(2, MAX) < NativeRational(2, MAX-2));
 
     REQUIRE(NativeRational(6, MAX-1) == NativeRational(3, (MAX-1)/2));
     REQUIRE(!(NativeRational(6, MAX-1) != NativeRational(3, (MAX-1)/2)));
+    REQUIRE(NativeRational(6, MAX-1) >= NativeRational(3, (MAX-1)/2));
+    REQUIRE(!(NativeRational(6, MAX-1) > NativeRational(3, (MAX-1)/2)));
+    REQUIRE(NativeRational(6, MAX-1) <= NativeRational(3, (MAX-1)/2));
+    REQUIRE(!(NativeRational(6, MAX-1) < NativeRational(3, (MAX-1)/2)));
 }
 
 TEST_CASE( "NativeRational::reduceInPlace" ) {
@@ -216,5 +221,17 @@ TEST_CASE( "ckd_sub (size_t - NativeRational)" ) {
 TEST_CASE( "ckd_sub (NativeRational - NativeRational)" ) {
     NativeRational result;
 
-    // TODO
+    REQUIRE_FALSE(ckd_sub(&result, NativeRational(2,5), NativeRational(1,3)));
+    REQUIRE(result.num == 1);
+    REQUIRE(result.den == 15);
+
+    REQUIRE_FALSE(ckd_sub(&result, NativeRational(2, MAX), NativeRational(2, MAX)));
+    REQUIRE(result.num == 0);
+    REQUIRE(result.den == MAX);
+
+    REQUIRE_FALSE(ckd_sub(&result, NativeRational(2, 3), NativeRational((MAX-1)/2, MAX-1)));
+    REQUIRE(result.num == 1);
+    REQUIRE(result.den == 6);
+
+    REQUIRE(true == ckd_sub(&result, NativeRational(1, MAX-1), NativeRational(1, MAX)));
 }

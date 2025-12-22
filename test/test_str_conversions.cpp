@@ -4,6 +4,8 @@
 
 using namespace KiCAS2;
 
+static constexpr size_t MAX = std::numeric_limits<size_t>::max();
+
 TEST_CASE( "write_int" ) {
     std::string str;
 
@@ -20,8 +22,8 @@ TEST_CASE( "write_int" ) {
     REQUIRE(str == "1234");
 
     str.clear();
-    write_int(str, std::numeric_limits<size_t>::max());
-    REQUIRE(str == std::to_string(std::numeric_limits<size_t>::max()));
+    write_int(str, MAX);
+    REQUIRE(str == std::to_string(MAX));
 }
 
 TEST_CASE( "ckd_str2int" ) {
@@ -36,10 +38,10 @@ TEST_CASE( "ckd_str2int" ) {
     REQUIRE_FALSE(ckd_str2int(&result, "4321"));
     REQUIRE(result == 4321);
 
-    REQUIRE_FALSE(ckd_str2int(&result, std::to_string(std::numeric_limits<size_t>::max())));
-    REQUIRE(result == std::numeric_limits<size_t>::max());
+    REQUIRE_FALSE(ckd_str2int(&result, std::to_string(MAX)));
+    REQUIRE(result == MAX);
 
-    std::string too_large_int = std::to_string(std::numeric_limits<size_t>::max());
+    std::string too_large_int = std::to_string(MAX);
     too_large_int.back()++;
     assert(too_large_int.back() >= '0' && too_large_int.back() <= '9');
     REQUIRE(true == ckd_str2int(&result, too_large_int));
@@ -81,13 +83,77 @@ TEST_CASE( "write_rational" ) {
 
 TEST_CASE( "ckd_strdecimal2rat" ) {
     NativeRational result;
-    ckd_strdecimal2rat(&result, "2", "5");
-    REQUIRE(result.num == 25);
-    REQUIRE(result.den == 10);
 
-    ckd_strdecimal2rat(&result, "127", "589");
-    REQUIRE(result.num == 127589);
-    REQUIRE(result.den == 1000);
+    SECTION("No factors"){
+        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "1.3"));
+        REQUIRE(result.num == 13);
+        REQUIRE(result.den == 10);
 
-    REQUIRE(true == ckd_strdecimal2rat(&result, "265252859812191058636308480000000", "1"));
+        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "127.589"));
+        REQUIRE(result.num == 127589);
+        REQUIRE(result.den == 1000);
+    }
+
+    SECTION("Factor of 2"){
+        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "2.2"));
+        REQUIRE(result.num == 11);
+        REQUIRE(result.den == 5);
+    }
+
+    SECTION("Factor of 5"){
+        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "2.5"));
+        REQUIRE(result.num == 5);
+        REQUIRE(result.den == 2);
+    }
+
+    SECTION("Multiple factors of 5"){
+        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "1.125"));
+        REQUIRE(result.num == 9);
+        REQUIRE(result.den == 8);
+    }
+
+    SECTION("Trailing zeros"){
+        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "1.30"));
+        REQUIRE(result.num == 13);
+        REQUIRE(result.den == 10);
+    }
+
+    SECTION("All trailing zeros"){
+        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "3.00"));
+        REQUIRE(result.num == 3);
+        REQUIRE(result.den == 1);
+    }
+
+    SECTION("Longest fitting decimal"){
+        // Test the longest 0.9999999... which fits
+        const std::string den_str = "1" + std::string(std::numeric_limits<size_t>::digits10-1, '0');
+        const size_t expected_den = std::stoull(den_str);
+        const size_t test_num = expected_den - 1;
+        const std::string test_str = "0." + std::to_string(test_num);
+
+        REQUIRE_FALSE(ckd_strdecimal2rat(&result, test_str));
+        REQUIRE(result.num == test_num);
+        REQUIRE(result.den == expected_den);
+    }
+
+    SECTION("Overflow"){
+        std::string test_str;
+
+        // Test the shortest 0.9999999... which does not fit
+        test_str = "0." + std::string(std::numeric_limits<size_t>::digits10, '9');
+        REQUIRE(true == ckd_strdecimal2rat(&result, test_str));
+
+        test_str = "0." + std::string(std::numeric_limits<size_t>::digits10-1, '9');
+        REQUIRE(false == ckd_strdecimal2rat(&result, test_str));
+
+        // // Test a combination of leading and trailing values which does not fit
+        test_str = "999." + std::string(std::numeric_limits<size_t>::digits10-1, '9');
+        REQUIRE(true == ckd_strdecimal2rat(&result, test_str));
+
+        test_str = "0." + std::string(std::numeric_limits<size_t>::digits10-1, '9');
+        REQUIRE(false == ckd_strdecimal2rat(&result, test_str));
+
+        // Test a leading value which does not fit
+        REQUIRE(true == ckd_strdecimal2rat(&result, "265252859812191058636308480000000.1"));
+    }
 }
