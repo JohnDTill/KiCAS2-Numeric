@@ -4,9 +4,30 @@
 #include <cassert>
 #include <numeric>
 
-#if !defined(__x86_64) && !defined( _WIN64 )  // 32-bit
+#if !defined(__x86_64) && !defined(__aarch64__) && !defined(_WIN64)  // 32-bit
 static_assert(sizeof(size_t)*8 == 32);
 #include <cstdint>
+#endif
+
+#if defined(__aarch64__) && defined(_WIN64)  // 64-bit ARM MSVC
+// MSVC on arm64 does not have any way to multiply 128-bit numbers using intrinsics.
+// We would rather create this function than include boost_multiprecision.
+inline uint64_t _umul128(uint64_t a, uint64_t b, uint64_t* result_high) {
+    uint64_t a_lo = static_cast<uint32_t>(a);
+    uint64_t a_hi = a >> 32;
+    uint64_t b_lo = static_cast<uint32_t>(b);
+    uint64_t b_hi = b >> 32;
+
+    uint64_t p0 = a_lo * b_lo;
+    uint64_t p1 = a_lo * b_hi;
+    uint64_t p2 = a_hi * b_lo;
+    uint64_t p3 = a_hi * b_hi;
+
+    uint64_t mid = (p0 >> 32) + static_cast<uint32_t>(p1) + static_cast<uint32_t>(p2);
+
+    *result_high = p3 + (p1 >> 32) + (p2 >> 32) + (mid >> 32);
+    return (p0 & 0xffffffffull) | (mid << 32);
+}
 #endif
 
 namespace KiCAS2 {
@@ -112,7 +133,7 @@ bool operator==(NativeRational a, NativeRational b) noexcept {
 
     return a_num_times_b_den_high == b_num_times_a_den_high
            && a_num_times_b_den_low == b_num_times_a_den_low;
-    #elif defined(__x86_64)  // 64-bit GCC or Clang
+    #elif defined(__x86_64) || defined(__aarch64__)  // 64-bit GCC or Clang
     return static_cast<__uint128_t>(a.num) * static_cast<__uint128_t>(b.den)
            == static_cast<__uint128_t>(b.num) * static_cast<__uint128_t>(a.den);
     #else  // 32-bit
