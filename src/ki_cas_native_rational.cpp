@@ -9,7 +9,7 @@ static_assert(sizeof(size_t)*8 == 32);
 #include <cstdint>
 #endif
 
-#if defined(__aarch64__) && defined(_WIN64)  // 64-bit ARM MSVC
+#if defined(_MSC_VER) && defined(_M_ARM64)  // 64-bit ARM MSVC
 // MSVC on arm64 does not have any way to multiply 128-bit numbers using intrinsics.
 // We would rather create this function than include boost_multiprecision.
 inline uint64_t _umul128(uint64_t a, uint64_t b, uint64_t* result_high) {
