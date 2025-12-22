@@ -6,12 +6,75 @@ using namespace KiCAS2;
 
 static constexpr size_t MAX = std::numeric_limits<size_t>::max();
 
-TEST_CASE ( "NativeRational conversions" ) {
+TEST_CASE( "NativeRational conversions" ) {
     NativeRational num(5, 2);
     REQUIRE(static_cast<long double>(num) == 2.5l);
     REQUIRE(static_cast<double>(num) == 2.5);
     REQUIRE(static_cast<float>(num) == 2.5f);
     REQUIRE(static_cast<size_t>(num) == 2);
+}
+
+static void compareHelper(NativeRational rat, size_t floor, bool is_floor) {
+    assert(floor < MAX);
+
+    REQUIRE((rat == floor) == is_floor);
+    REQUIRE((floor == rat) == is_floor);
+    REQUIRE((rat != floor) == !is_floor);
+    REQUIRE((floor != rat) == !is_floor);
+
+    REQUIRE( !(rat == floor+1) );
+    REQUIRE( !(floor+1 == rat) );
+    REQUIRE( rat != floor+1 );
+    REQUIRE( floor+1 != rat );
+
+    REQUIRE(rat >= floor);
+    REQUIRE(floor <= rat);
+    REQUIRE((rat <= floor) == is_floor);
+    REQUIRE((floor >= rat) == is_floor);
+
+    REQUIRE((rat > floor) == !is_floor);
+    REQUIRE((floor < rat) == !is_floor);
+    REQUIRE(!(rat < floor));
+    REQUIRE(!(floor > rat));
+
+    REQUIRE(!(rat >= floor+1));
+    REQUIRE(!(floor+1 <= rat));
+    REQUIRE(rat <= floor+1);
+    REQUIRE(floor+1 >= rat);
+
+    REQUIRE(!(rat > floor+1));
+    REQUIRE(!(floor+1 < rat));
+    REQUIRE(rat < floor+1);
+    REQUIRE(floor+1 > rat);
+}
+
+TEST_CASE( "NativeRational vs. size_t comparisons" ) {
+    compareHelper(NativeRational(3,2), 1, false);
+    compareHelper(NativeRational(10,5), 2, true);
+    compareHelper(NativeRational(MAX, MAX-1), 1, false);
+    compareHelper(NativeRational(MAX-1, MAX-1), 1, true);
+}
+
+TEST_CASE( "NativeRational vs. NativeRational comparisons" ) {
+    REQUIRE(!(NativeRational(1,3) == NativeRational(1,5)));
+    REQUIRE(NativeRational(1,3) != NativeRational(1,5));
+    REQUIRE(NativeRational(1,3) > NativeRational(1,5));
+    REQUIRE(NativeRational(1,3) >= NativeRational(1,5));
+    REQUIRE(NativeRational(1,5) < NativeRational(1,3));
+    REQUIRE(NativeRational(1,5) <= NativeRational(1,3));
+
+    REQUIRE(NativeRational(7,3) == NativeRational(14,6));
+    REQUIRE(!(NativeRational(7,3) != NativeRational(14,6)));
+    REQUIRE(!(NativeRational(7,3) > NativeRational(14,6)));
+    REQUIRE(NativeRational(7,3) >= NativeRational(14,6));
+    REQUIRE(!(NativeRational(7,3) < NativeRational(14,6)));
+    REQUIRE(NativeRational(7,3) <= NativeRational(14,6));
+
+    // TODO: test args causing overflow
+    // REQUIRE(!(NativeRational(2, MAX-2) == NativeRational(2, MAX)));
+    // REQUIRE(NativeRational(2, MAX-2) != NativeRational(2, MAX));
+    // REQUIRE(NativeRational(2, MAX-2) >= NativeRational(2, MAX));
+    // REQUIRE(NativeRational(2, MAX-2) > NativeRational(2, MAX));
 }
 
 TEST_CASE( "NativeRational::reduceInPlace" ) {
@@ -119,4 +182,36 @@ TEST_CASE( "ckd_add (NativeRational + NativeRational)" ) {
     REQUIRE(result.den == 2);
 
     REQUIRE(true == ckd_add(&result, NativeRational(1, MAX), NativeRational(1, 2)));
+}
+
+TEST_CASE( "sub (NativeRational - size_t)" ) {
+    NativeRational result;
+
+    result = sub(NativeRational(17, 5), 2);
+    REQUIRE(result.num == 7);
+    REQUIRE(result.den == 5);
+
+    result = sub(NativeRational(121, 2), 50);
+    REQUIRE(result.num == 21);
+    REQUIRE(result.den == 2);
+}
+
+TEST_CASE( "ckd_sub (size_t - NativeRational)" ) {
+    NativeRational result;
+
+    REQUIRE_FALSE(ckd_sub(&result, 2, NativeRational(1, 2)));
+    REQUIRE(result.num == 3);
+    REQUIRE(result.den == 2);
+
+    REQUIRE_FALSE(ckd_sub(&result, 2, NativeRational((MAX-1)/2, MAX-1)));
+    REQUIRE(result.num == 3);
+    REQUIRE(result.den == 2);
+
+    REQUIRE(true == ckd_sub(&result, 2, NativeRational(1, MAX)));
+}
+
+TEST_CASE( "ckd_sub (NativeRational - NativeRational)" ) {
+    NativeRational result;
+
+    // TODO
 }

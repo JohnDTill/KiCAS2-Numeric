@@ -57,4 +57,49 @@ void write_rational(std::string& str, NativeRational val) {
 template void write_rational<false>(std::string&, NativeRational);
 template void write_rational<true>(std::string&, NativeRational);
 
+bool ckd_strdecimal2rat(NativeRational* result, std::string_view str_lead, std::string_view str_trail) noexcept {
+    // TODO: figure out the right function signature for ease and correctness
+    // assert(str_trail.data() == str_lead.data() + str_lead.size() + 1);
+    // assert(*(str_lead.data() + str_lead.size()) == '.');
+    // assert(*(str_trail.data() - 1) == '.');
+
+    // TODO: you know the factors of the denominator, so reducing here is cheap
+
+    // TODO
+    // a.b = f"{a}{b}/{10^len(b)}" if len(a) + len(b) fits
+
+    // a.b = a + b/10^len(b)
+    if(str_trail.size() >= std::numeric_limits<size_t>::digits10) return true;
+
+    size_t lead;
+    size_t trail;
+    if(ckd_str2int(&lead, str_lead) || ckd_str2int(&trail, str_trail)) return true;
+
+    constexpr size_t powers_of_ten[std::numeric_limits<size_t>::digits10] = {
+        1,
+        10,
+        100,
+        1000,
+        10000,
+        100000,
+        1000000,
+        10000000,
+        100000000,
+        #if __WORDSIZE >= 64
+        1000000000,
+        10000000000,
+        100000000000,
+        1000000000000,
+        10000000000000,
+        100000000000000,
+        1000000000000000,
+        10000000000000000,
+        100000000000000000,
+        1000000000000000000,
+        #endif
+    };
+
+    return ckd_add(result, NativeRational(trail, powers_of_ten[str_trail.size()]), lead);
+}
+
 }  // namespace KiCAS2

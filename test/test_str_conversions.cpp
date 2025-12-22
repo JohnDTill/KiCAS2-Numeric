@@ -78,3 +78,16 @@ TEST_CASE( "write_rational" ) {
         REQUIRE(str == "x + ⁜f⏴3⏵⏴2⏵");
     }
 }
+
+TEST_CASE( "ckd_strdecimal2rat" ) {
+    NativeRational result;
+    ckd_strdecimal2rat(&result, "2", "5");
+    REQUIRE(result.num == 25);
+    REQUIRE(result.den == 10);
+
+    ckd_strdecimal2rat(&result, "127", "589");
+    REQUIRE(result.num == 127589);
+    REQUIRE(result.den == 1000);
+
+    REQUIRE(true == ckd_strdecimal2rat(&result, "265252859812191058636308480000000", "1"));
+}

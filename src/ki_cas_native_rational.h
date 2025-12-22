@@ -16,6 +16,26 @@ struct NativeRational {
     operator float() const noexcept;
     explicit operator size_t() const noexcept;
 
+    friend bool operator==(NativeRational a, size_t b) noexcept;
+    friend bool operator!=(NativeRational a, size_t b) noexcept;
+    friend bool operator==(size_t a, NativeRational b) noexcept;
+    friend bool operator!=(size_t a, NativeRational b) noexcept;
+    friend bool operator>(NativeRational a, size_t b) noexcept;
+    friend bool operator>=(NativeRational a, size_t b) noexcept;
+    friend bool operator<(NativeRational a, size_t b) noexcept;
+    friend bool operator<=(NativeRational a, size_t b) noexcept;
+    friend bool operator>(size_t a, NativeRational b) noexcept;
+    friend bool operator>=(size_t a, NativeRational b) noexcept;
+    friend bool operator<(size_t a, NativeRational b) noexcept;
+    friend bool operator<=(size_t a, NativeRational b) noexcept;
+
+    friend bool operator==(NativeRational a, NativeRational b) noexcept;
+    friend bool operator!=(NativeRational a, NativeRational b) noexcept;
+    friend bool operator>(NativeRational a, NativeRational b) noexcept;
+    friend bool operator>=(NativeRational a, NativeRational b) noexcept;
+    friend bool operator<(NativeRational a, NativeRational b) noexcept;
+    friend bool operator<=(NativeRational a, NativeRational b) noexcept;
+
     void reduceInPlace() noexcept;
 };
 
@@ -35,17 +55,16 @@ bool ckd_add(NativeRational* result, NativeRational a, size_t b) noexcept;
 /// reduction is performed if required to fit, but the result is NOT canonicalised
 bool ckd_add(NativeRational* result, NativeRational a, NativeRational b) noexcept;
 
-// vvv TODO vvv //
-
-/// Returns true if the calculation overflows
 /// Requires a > b, asserts otherwise
-/// reduction is performed if required to fit, but the result is NOT canonicalised
-bool ckd_sub(NativeRational* result, NativeRational a, size_t b) noexcept;
+/// This operation is fundamentally always possible without size considerations
+NativeRational sub(NativeRational a, size_t b) noexcept;
 
 /// Returns true if the calculation overflows
 /// Requires a > b, asserts otherwise
 /// reduction is performed if required to fit, but the result is NOT canonicalised
 bool ckd_sub(NativeRational* result, size_t a, NativeRational b) noexcept;
+
+// vvv TODO vvv //
 
 /// Returns true if the calculation overflows
 /// Requires a > b, asserts otherwise
