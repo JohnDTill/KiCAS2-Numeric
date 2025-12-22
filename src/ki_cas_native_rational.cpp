@@ -292,15 +292,17 @@ bool ckd_add(NativeRational* result, NativeRational a, NativeRational b) noexcep
        && ckd_add(&result->num, a_num_times_b_den, b_num_times_a_den) == false)
         return false;
 
-    a.reduceInPlace();
-    b.reduceInPlace();
-
-    // (b*d) = [ a*(d/gcd(b,d)) + c*(b/gcd(b,d)) ] / [b*(d/gcd(b,d))]
     const size_t gcd_a_den_b_den = std::gcd(a.den, b.den);
-    if(gcd_a_den_b_den != 1){
-        a.den /= gcd_a_den_b_den;
-        b.den /= gcd_a_den_b_den;
-    }
+    const size_t gcd_a = std::gcd(a.num, a.den);
+    const size_t gcd_b = std::gcd(b.num, b.den);
+
+    const size_t a_den_divisor = knownfit_mul(gcd_a, gcd_a_den_b_den);
+    const size_t b_den_divior = knownfit_mul(gcd_b, gcd_a_den_b_den);
+
+    if(a_den_divisor != 1) a.den /= a_den_divisor;
+    if(b_den_divior != 1) b.den /= b_den_divior;
+    if(gcd_a != 1) a.num /= gcd_a;
+    if(gcd_b != 1) b.num /= gcd_b;
 
     return ckd_mul(&result->den, a.den, b.den*gcd_a_den_b_den)
        || ckd_mul(&a_num_times_b_den, a.num, b.den)
@@ -349,15 +351,17 @@ bool ckd_sub(NativeRational* result, NativeRational a, NativeRational b) noexcep
         return false;
     }
 
-    a.reduceInPlace();
-    b.reduceInPlace();
-
-    // (b*d) = [ a*(d/gcd(b,d)) + c*(b/gcd(b,d)) ] / [b*(d/gcd(b,d))]
     const size_t gcd_a_den_b_den = std::gcd(a.den, b.den);
-    if(gcd_a_den_b_den != 1){
-        a.den /= gcd_a_den_b_den;
-        b.den /= gcd_a_den_b_den;
-    }
+    const size_t gcd_a = std::gcd(a.num, a.den);
+    const size_t gcd_b = std::gcd(b.num, b.den);
+
+    const size_t a_den_divisor = knownfit_mul(gcd_a, gcd_a_den_b_den);
+    const size_t b_den_divior = knownfit_mul(gcd_b, gcd_a_den_b_den);
+
+    if(a_den_divisor != 1) a.den /= a_den_divisor;
+    if(b_den_divior != 1) b.den /= b_den_divior;
+    if(gcd_a != 1) a.num /= gcd_a;
+    if(gcd_b != 1) b.num /= gcd_b;
 
     if(ckd_mul(&result->den, a.den, b.den * gcd_a_den_b_den) == false
         && ckd_mul(&a_num_times_b_den, a.num, b.den) == false
