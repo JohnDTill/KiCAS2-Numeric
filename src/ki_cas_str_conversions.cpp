@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <charconv>
+#include "ki_cas_integer_math.h"
 #include <limits>
 
 namespace KiCAS2 {
@@ -45,6 +46,124 @@ void fmpz_set_str_NULL_TERMINATED_SOURCE__NOT_THREADSAFE(fmpz_t f, std::string_v
     *end_const_discarded = backup;
 }
 
-
-
+template<bool typeset_fraction>
+void write_rational(std::string& str, NativeRational val) {
+    if(typeset_fraction) str += "⁜f⏴";
+    write_int(str, val.num);
+    if(typeset_fraction) str += "⏵⏴";
+    else str += '/';
+    write_int(str, val.den);
+    if(typeset_fraction) str += "⏵";
 }
+template void write_rational<false>(std::string&, NativeRational);
+template void write_rational<true>(std::string&, NativeRational);
+
+bool ckd_strdecimal2rat(NativeRational* result, std::string_view str) noexcept {
+    const auto decimal_index = str.find('.');
+    assert(decimal_index != std::string::npos);
+
+    return ckd_strdecimal2rat(result, str, decimal_index);
+}
+
+bool ckd_strdecimal2rat(NativeRational* result, std::string_view str, size_t decimal_index) noexcept {
+    assert(str.at(decimal_index) == '.');
+
+    std::string_view lead = str.substr(0, decimal_index);
+
+    // Omit trailing zeros
+    size_t back_index = str.size()-1;
+    while(str[back_index] == '0') back_index--;
+
+    if(back_index == decimal_index){
+        // Only trailing zeros, e.g. "2.0"
+        result->den = 1;
+        return ckd_str2int(&result->num, lead);
+    }else{
+        std::string_view trail = str.substr(decimal_index+1, back_index-decimal_index);
+        return ckd_strdecimal2rat(result, lead, trail);
+    }
+}
+
+bool ckd_strdecimal2rat(NativeRational* result, std::string_view str_lead, std::string_view str_trail) noexcept {
+    // Precondition: strings are from the same number source, separated by a decimal point
+    assert(str_trail.data() == str_lead.data() + str_lead.size() + 1);
+    assert(*(str_lead.data() + str_lead.size()) == '.');
+    assert(*(str_trail.data() - 1) == '.');
+
+    // Precondition: there are no trailing zeros
+    assert(str_trail.back() != '0');
+
+    if(str_trail.size() >= std::numeric_limits<size_t>::digits10) return true;
+
+    size_t lead;
+    size_t trail;
+    if(ckd_str2int(&lead, str_lead) || ckd_str2int(&trail, str_trail)) return true;
+
+    // a.b = a + b/10^len(b)
+
+    constexpr size_t powers_of_ten[] = {
+        1,
+        10,
+        100,
+        1000,
+        10000,
+        100000,
+        1000000,
+        10000000,
+        100000000,
+        #if defined(__x86_64__) || defined(__aarch64__) || defined( _WIN64 )  // 64-bit
+        1000000000,
+        10000000000,
+        100000000000,
+        1000000000000,
+        10000000000000,
+        100000000000000,
+        1000000000000000,
+        10000000000000000,
+        100000000000000000,
+        1000000000000000000,
+        #endif
+    };
+    size_t den = powers_of_ten[str_trail.size()];
+
+    // Check this rather than specify it to make sure the macro worked
+    static_assert(sizeof(powers_of_ten)/sizeof(size_t) == std::numeric_limits<size_t>::digits10);
+
+    // The factors of the denominator are:
+    //   Up to one instance of 2
+    //   Arbitrarily many instances of 5
+    //
+    // Since the factors of the denominator are known, reducing here is cheap
+
+    // Remove a factor of 2
+    const bool is_even = (trail % 2 == 0);
+    den >>= is_even;
+    trail >>= is_even;
+
+    // Remove all factors of 5
+    // The first factor has a cheap test given the string representation
+    const bool has_factor_of_5 = (str_trail.back() == '5');
+    if(has_factor_of_5){
+        trail /= 5;
+        den /= 5;
+
+        size_t trail_div_5 = trail / 5;
+        size_t trail_mod_5 = trail % 5;
+        while(trail_mod_5 == 0){
+            trail = trail_div_5;
+            den /= 5;
+
+            trail_div_5 = trail / 5;
+            trail_mod_5 = trail % 5;
+        }
+    }
+
+    result->den = den;
+
+    // No further reduction attempted since the denominator is fully reduced.
+
+    size_t lead_times_den;
+    return ckd_mul(&lead_times_den, lead, den) || ckd_add(&result->num, lead_times_den, trail);
+}
+
+}  // namespace KiCAS2

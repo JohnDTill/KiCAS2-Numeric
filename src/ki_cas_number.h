@@ -64,6 +64,6 @@ private:
     } data;
 };
 
-}
+}  // namespace KiCAS2
 
 #endif  // #ifndef KI_CAS_NUMBER_H

@@ -36,6 +36,11 @@ size_t knownfit_mul(size_t a, size_t b) noexcept {
     return a * b;
 }
 
+size_t knownfit_sub(size_t a, size_t b) noexcept {
+    assert(a >= b);
+    return a - b;
+}
+
 bool ckd_sqrt(size_t* result, size_t arg) noexcept {
     // Adequate precision confirmed for 64-bit numbers, see tests
     *result = static_cast<size_t>(std::sqrt(static_cast<double>(arg)));
@@ -99,4 +104,4 @@ size_t knownfit_pow(size_t base, size_t power) noexcept {
     else return knownfit_mul(base, knownfit_mul(tmp, tmp));
 }
 
-}
+}  // namespace KiCAS2

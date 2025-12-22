@@ -12,6 +12,8 @@ link_directories("${FLINT_ROOT}/lib")
 set(SRC_FILES
     src/ki_cas_integer_math.cpp
     src/ki_cas_integer_math.h
+    src/ki_cas_native_rational.h
+    src/ki_cas_native_rational.cpp
     src/ki_cas_number.cpp
     src/ki_cas_number.h
     src/ki_cas_str_conversions.cpp
@@ -41,6 +43,7 @@ find_package(Catch2 CONFIG REQUIRED)
 enable_testing()
 add_executable(IntegrationTests
     test/test_integer_math.cpp
+    test/test_native_rational.cpp
     test/test_str_conversions.cpp)
 target_include_directories(IntegrationTests PUBLIC src)
 target_link_libraries(IntegrationTests PRIVATE ki_cas_number Catch2::Catch2WithMain)

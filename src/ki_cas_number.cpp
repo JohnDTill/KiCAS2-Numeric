@@ -72,4 +72,4 @@ bool Number::Data::isMachineRat() const noexcept {
 }
 #endif
 
-}
+}  // namespace KiCAS2

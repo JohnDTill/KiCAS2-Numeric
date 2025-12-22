@@ -1,0 +1,74 @@
+#ifndef KI_CAS_NATIVE_RATIONAL_H
+#define KI_CAS_NATIVE_RATIONAL_H
+
+#include <stddef.h>
+
+namespace KiCAS2 {
+
+struct NativeRational {
+    size_t num;
+    size_t den;
+
+    NativeRational() noexcept = default;
+    NativeRational(size_t numerator, size_t denominator) noexcept;
+    operator long double() const noexcept;
+    operator double() const noexcept;
+    operator float() const noexcept;
+    explicit operator size_t() const noexcept;
+
+    friend bool operator==(NativeRational a, size_t b) noexcept;
+    friend bool operator!=(NativeRational a, size_t b) noexcept;
+    friend bool operator==(size_t a, NativeRational b) noexcept;
+    friend bool operator!=(size_t a, NativeRational b) noexcept;
+    friend bool operator>(NativeRational a, size_t b) noexcept;
+    friend bool operator>=(NativeRational a, size_t b) noexcept;
+    friend bool operator<(NativeRational a, size_t b) noexcept;
+    friend bool operator<=(NativeRational a, size_t b) noexcept;
+    friend bool operator>(size_t a, NativeRational b) noexcept;
+    friend bool operator>=(size_t a, NativeRational b) noexcept;
+    friend bool operator<(size_t a, NativeRational b) noexcept;
+    friend bool operator<=(size_t a, NativeRational b) noexcept;
+
+    friend bool operator==(NativeRational a, NativeRational b) noexcept;
+    friend bool operator!=(NativeRational a, NativeRational b) noexcept;
+    friend bool operator>(NativeRational a, NativeRational b) noexcept;
+    friend bool operator>=(NativeRational a, NativeRational b) noexcept;
+    friend bool operator<(NativeRational a, NativeRational b) noexcept;
+    friend bool operator<=(NativeRational a, NativeRational b) noexcept;
+
+    void reduceInPlace() noexcept;
+};
+
+/// Returns true if the calculation overflows.
+/// reduction is performed if required to fit, but the result is NOT canonicalised
+bool ckd_mul(NativeRational* result, NativeRational a, size_t b) noexcept;
+
+/// Returns true if the calculation overflows
+/// reduction is performed if required to fit, but the result is NOT canonicalised
+bool ckd_mul(NativeRational* result, NativeRational a, NativeRational b) noexcept;
+
+/// Returns true if the calculation overflows
+/// reduction is performed if required to fit, but the result is NOT canonicalised
+bool ckd_add(NativeRational* result, NativeRational a, size_t b) noexcept;
+
+/// Returns true if the calculation overflows
+/// reduction is performed if required to fit, but the result is NOT canonicalised
+bool ckd_add(NativeRational* result, NativeRational a, NativeRational b) noexcept;
+
+/// Requires a > b, asserts otherwise
+/// This operation is fundamentally always possible without size considerations
+NativeRational sub(NativeRational a, size_t b) noexcept;
+
+/// Returns true if the calculation overflows
+/// Requires a > b, asserts otherwise
+/// reduction is performed if required to fit, but the result is NOT canonicalised
+bool ckd_sub(NativeRational* result, size_t a, NativeRational b) noexcept;
+
+/// Returns true if the calculation overflows
+/// Requires a > b, asserts otherwise
+/// reduction is performed if required to fit, but the result is NOT canonicalised
+bool ckd_sub(NativeRational* result, NativeRational a, NativeRational b) noexcept;
+
+}  // namespace KiCAS2
+
+#endif // KI_CAS_NATIVE_RATIONAL_H
