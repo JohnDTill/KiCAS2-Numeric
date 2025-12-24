@@ -3,6 +3,7 @@
   "name": "kicas-number-dependencies",
   "version-string": "0.0.1",
   "dependencies": [
+    "pkgconf",
     "flint",
     "catch2"
   ]

@@ -6,6 +6,7 @@
 #endif
 
 #include <cstddef>
+#include <gmp.h>
 #include <flint/fmpq.h>
 #include <flint/fmpz.h>
 
@@ -27,6 +28,8 @@ private:
         inline void setDenominator(size_t val) noexcept;
 
     private:
+        ~Data() noexcept;
+
         struct MachineRational {
             size_t numerator;
             size_t denominator;
@@ -40,7 +43,7 @@ private:
         union {
             size_t machine_int;
             MachineRational machine_rational;
-            fmpz_t big_int;
+            mpz_t big_int;
             fmpq_t big_rational;
             Complex complex;
         } data;
@@ -51,7 +54,7 @@ private:
             PosRat,
             NegRat,
             BigInt,
-            BitRat,
+            BigRat,
             Complex,
         } tag;
 

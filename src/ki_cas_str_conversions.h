@@ -6,6 +6,7 @@
 #endif
 
 #include <flint/fmpz.h>
+#include "ki_cas_big_num_wrapper.h"
 #include "ki_cas_native_rational.h"
 #include <string>
 
@@ -36,6 +37,12 @@ bool ckd_strdecimal2rat(NativeRational* result, std::string_view str, size_t dec
 
 /// Set an NativeRational from a string. Returns true if the value is too large to fit.
 bool ckd_strdecimal2rat(NativeRational* result, std::string_view str_lead, std::string_view str_trail) noexcept;
+
+/// Append a big integer to the end of the string
+void write_big_int(std::string& str, const BigInteger val);
+
+/// Append a big rational to the end of the string
+template<bool typeset_fraction> void write_big_rational(std::string& str, const BigRational val);
 
 }  // namespace KiCAS2
 

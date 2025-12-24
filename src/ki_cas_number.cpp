@@ -4,6 +4,15 @@
 
 namespace KiCAS2 {
 
+Number::Data::~Data() noexcept {
+    switch (tag) {
+        case BigInt: /* TODO: deallocate */ break;
+        case BigRat: /* TODO: deallocate */ break;
+        case Complex:  /* TODO: deallocate */ break;
+        default: break;
+    }
+}
+
 size_t Number::Data::getPosInt() const noexcept {
     assert(isPosInt());
     return data.machine_int;

@@ -166,4 +166,84 @@ bool ckd_strdecimal2rat(NativeRational* result, std::string_view str_lead, std::
     return ckd_mul(&lead_times_den, lead, den) || ckd_add(&result->num, lead_times_den, trail);
 }
 
+static size_t numBase10DigitsLowerBound(const mpz_t val) noexcept {
+    // return mpz_sizeinbase(val, 10);  // Doing computation here is silly, make a quick lower bound
+    return mpz_size(val) * std::numeric_limits<mp_limb_t>::digits10;
+}
+
+static size_t numBase10DigitsLowerBound(const fmpz_t val) noexcept {
+    // return fmpz_sizeinbase(val, 10);  // Doing computation here is silly, make a quick lower bound
+    return fmpz_size(val) * std::numeric_limits<mp_limb_t>::digits10;
+}
+
+void write_big_int(std::string& str, const BigInteger val) {
+    // Resize str to ensure sufficient capacity for the largest possible number
+    static constexpr size_t base = 10;
+    static constexpr size_t PLUS_ONE_FOR_SIGN = 1;
+    static constexpr size_t PLUS_ONE_FOR_NULL_TERMINATOR = 1;
+
+    const size_t max_digits = numBase10DigitsLowerBound(val) + (PLUS_ONE_FOR_SIGN + PLUS_ONE_FOR_NULL_TERMINATOR);
+    const size_t start_index = str.size();
+    str.resize(str.size() + max_digits);
+
+    // Append the number to the end of str
+    mpz_get_str(str.data() + start_index, base, val);
+
+    // Resize where prior allocation exceeded the actual need
+    const size_t null_terminator_index = str.find('\0', start_index);
+    str.resize(null_terminator_index);
+}
+
+static void write_big_int(std::string& str, const fmpz_t val, bool is_negative) {
+    // Resize str to ensure sufficient capacity for the largest possible number
+    static constexpr size_t base = 10;
+    static constexpr size_t PLUS_ONE_FOR_SIGN = 1;
+    static constexpr size_t PLUS_ONE_FOR_NULL_TERMINATOR = 1;
+
+    const size_t max_digits = fmpz_sizeinbase(val, base) + (PLUS_ONE_FOR_SIGN + PLUS_ONE_FOR_NULL_TERMINATOR);
+    const size_t start_index = str.size();
+    str.resize(str.size() + max_digits);
+
+    // Append the number to the end of str, overwriting any sign character
+    const char backup = str[start_index-1];
+    fmpz_get_str(str.data() + start_index - is_negative, base, val);
+    str[start_index-1] = backup;
+
+    // Resize where prior allocation exceeded the actual need
+    const size_t null_terminator_index = str.find('\0', start_index);
+    str.resize(null_terminator_index);
+}
+
+template<bool typeset_fraction> void write_big_rational(std::string& str, const BigRational val) {
+    const fmpz* num = fmpq_numref(val);
+    const fmpz* den = fmpq_denref(val);
+
+    if(typeset_fraction){
+        const bool is_negative = (fmpz_sgn(num) == -1);
+        if(is_negative) str += '-';
+        str += "⁜f⏴";
+        write_big_int(str, num, is_negative);
+        str += "⏵⏴";
+        write_big_int(str, den, false);
+        str += "⏵";
+    }else{
+        static constexpr size_t base = 10;
+        static constexpr size_t PLUS_ONE_FOR_SIGN = 1;
+        static constexpr size_t PLUS_ONE_FOR_NULL_TERMINATOR = 1;
+        static constexpr size_t PLUS_ONE_FOR_DIVISION = 1;
+        const size_t max_digits = numBase10DigitsLowerBound(num) + numBase10DigitsLowerBound(den)
+                                  + (PLUS_ONE_FOR_SIGN + PLUS_ONE_FOR_NULL_TERMINATOR + PLUS_ONE_FOR_DIVISION);
+        const size_t start_index = str.size();
+        str.resize(str.size() + max_digits);
+
+        _fmpq_get_str(str.data() + start_index, base, num, den);
+
+        // Resize where prior allocation exceeded the actual need
+        const size_t null_terminator_index = str.find('\0', start_index);
+        str.resize(null_terminator_index);
+    }
+}
+template void write_big_rational<false>(std::string&, const BigRational);
+template void write_big_rational<true>(std::string&, const BigRational);
+
 }  // namespace KiCAS2

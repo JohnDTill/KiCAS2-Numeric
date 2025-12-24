@@ -9,7 +9,12 @@ set(FLINT_ROOT "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 include_directories("${FLINT_ROOT}/include")
 link_directories("${FLINT_ROOT}/lib")
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(gmp REQUIRED IMPORTED_TARGET gmp)
+
 set(SRC_FILES
+    src/ki_cas_big_num_wrapper.cpp
+    src/ki_cas_big_num_wrapper.h
     src/ki_cas_integer_math.cpp
     src/ki_cas_integer_math.h
     src/ki_cas_native_rational.h
@@ -29,7 +34,7 @@ foreach(X Flint::flint gmp mpfr)
         message(FATAL_ERROR "Must dynamically link ${X} for LGPL compliance with Forscape's license")
     endif()
 endforeach()
-target_link_libraries(ki_cas_number flint)
+target_link_libraries(ki_cas_number PkgConfig::gmp flint)
 
 set_target_properties(ki_cas_number PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(ki_cas_number PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
@@ -42,6 +47,7 @@ find_package(Catch2 CONFIG REQUIRED)
 
 enable_testing()
 add_executable(IntegrationTests
+    test/test_big_num_wrapper.cpp
     test/test_integer_math.cpp
     test/test_native_rational.cpp
     test/test_str_conversions.cpp)
