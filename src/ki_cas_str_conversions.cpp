@@ -45,7 +45,7 @@ FloatingPoint strdecimal2floatingpoint(std::string_view str) noexcept {
 
     #if !defined(__GNUC__) || __GNUC__ > 8
     const auto parse_result = std::from_chars(str.data(), str.data() + str.size(), result, std::chars_format::fixed);
-    assert(parse_result.ptr != str.data()+str.size());
+    assert(parse_result.ptr == str.data()+str.size());
     #else
     result = std::strtold(str.data(), nullptr);
     #endif
@@ -58,7 +58,7 @@ FloatingPoint strscientific2floatingpoint(std::string_view str) noexcept {
 
     #if !defined(__GNUC__) || __GNUC__ > 8
     const auto parse_result = std::from_chars(str.data(), str.data() + str.size(), result, std::chars_format::scientific);
-    assert(parse_result.ptr != str.data()+str.size());
+    assert(parse_result.ptr == str.data()+str.size());
     #else
     result = std::strtold(str.data(), nullptr);
     #endif
