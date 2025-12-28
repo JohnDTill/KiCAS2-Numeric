@@ -15,6 +15,7 @@ pkg_check_modules(gmp REQUIRED IMPORTED_TARGET gmp)
 set(SRC_FILES
     src/ki_cas_big_num_wrapper.cpp
     src/ki_cas_big_num_wrapper.h
+    src/ki_cas_float.h
     src/ki_cas_integer_math.cpp
     src/ki_cas_integer_math.h
     src/ki_cas_native_rational.h
@@ -50,6 +51,7 @@ add_executable(IntegrationTests
     test/test_big_num_wrapper.cpp
     test/test_integer_math.cpp
     test/test_native_rational.cpp
+    test/test_number.cpp
     test/test_str_conversions.cpp)
 target_include_directories(IntegrationTests PUBLIC src)
 target_link_libraries(IntegrationTests PRIVATE ki_cas_number Catch2::Catch2WithMain)

@@ -7,6 +7,7 @@
 
 #include <flint/fmpz.h>
 #include "ki_cas_big_num_wrapper.h"
+#include "ki_cas_float.h"
 #include "ki_cas_native_rational.h"
 #include <string>
 
@@ -14,6 +15,15 @@ namespace KiCAS2 {
 
 /// Append an integer to the end of the string
 void write_int(std::string& str, size_t val);
+
+/// Append a float to the end of the string
+void write_float(std::string& str, FloatingPoint val);
+
+/// Parse a string to a floating point number
+FloatingPoint strdecimal2floatingpoint(std::string_view str) noexcept;
+
+/// Parse a string to a floating point number
+FloatingPoint strscientific2floatingpoint(std::string_view str) noexcept;
 
 /// Set an integer from a string. Returns true if the value is too large to fit.
 bool ckd_str2int(size_t* result, std::string_view str) noexcept;
@@ -47,7 +57,8 @@ bool ckd_strdecimal2rat(NativeRational* result, std::string_view str_lead, std::
 bool ckd_strscientific2rat(NativeRational* result, std::string_view str) noexcept;
 
 /// Set an NativeRational from a string. Returns true if the value is too large to fit.
-bool ckd_strscientific2rat(NativeRational* result, std::string_view str, size_t decimal_index, size_t e_index) noexcept;
+bool ckd_strscientific2rat(
+    NativeRational* result, std::string_view str, size_t decimal_index, size_t e_index) noexcept;
 
 /// Set a big rational from a decimal number string.
 /// @warning The underlying string must be null-terminated and not accessed in another thread. Neither
@@ -62,17 +73,19 @@ void strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::strin
 /// Set a big rational from a decimal number string.
 /// @warning The underlying string must be null-terminated and not accessed in another thread. Neither
 ///          precondition is verifiable here.
-void strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::string_view str_lead, std::string_view str_trail);
+void strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE(
+    BigRational f, std::string_view str_lead, std::string_view str_trail);
 
 /// Set a big rational from a scientific number string.
 /// @warning The underlying string must be null-terminated and not accessed in another thread. Neither
 ///          precondition is verifiable here.
-void strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::string_view str, size_t decimal_index);
+void strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::string_view str);
 
 /// Set a big rational from a scientific number string.
 /// @warning The underlying string must be null-terminated and not accessed in another thread. Neither
 ///          precondition is verifiable here.
-void strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::string_view str_lead, std::string_view str_trail);
+void strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(
+    BigRational f, std::string_view str, size_t decimal_index, size_t e_index);
 
 /// Append a big integer to the end of the string
 void write_big_int(std::string& str, const BigInteger val);

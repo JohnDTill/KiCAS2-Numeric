@@ -17,6 +17,10 @@ void flipSign(BigInteger val) noexcept {
     val->_mp_size *= -1;
 }
 
+void absValInPlace(BigRational val) noexcept {
+    val->num &= ~(1uLL << (8*sizeof(size_t)-1));
+}
+
 #ifndef NDEBUG
 static std::allocator<size_t> allocator;
 static std::unordered_set<const void*> allocated_memory;

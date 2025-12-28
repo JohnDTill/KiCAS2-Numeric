@@ -26,6 +26,16 @@ TEST_CASE( "write_int" ) {
     REQUIRE(str == std::to_string(MAX));
 }
 
+TEST_CASE( "strdecimal2floatingpoint" ){
+    REQUIRE( std::abs(strdecimal2floatingpoint("4.2") - 4.2) < 1e-9 );
+    REQUIRE( std::abs(strdecimal2floatingpoint("1234") - 1234.0) < 1e-9 );
+}
+
+TEST_CASE( "strscientific2floatingpoint" ){
+    REQUIRE( std::abs(strscientific2floatingpoint("0.42e2")) - 42.0 < 1e-9 );
+    REQUIRE( std::abs(strscientific2floatingpoint("12.34e-2")) - 0.1234 < 1e-9 );
+}
+
 TEST_CASE( "ckd_str2int" ) {
     size_t result;
 
@@ -216,6 +226,17 @@ TEST_CASE( "strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE" ) {
 
         fmpq_clear(big_rat);
         fmpz_clear(factorial_of_30);
+        DEBUG_REQUIRE(isAllGmpMemoryFreed());
+    }
+
+    SECTION("Big rat"){
+        input = "265252859812191058636308480000000.5";
+        strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE(big_rat, input);
+        std::string out;
+        write_big_rational<false>(out, big_rat);
+        REQUIRE(out == "530505719624382117272616960000001/2");
+        REQUIRE(input == "265252859812191058636308480000000.5");
+        fmpq_clear(big_rat);
         DEBUG_REQUIRE(isAllGmpMemoryFreed());
     }
 }

@@ -21,14 +21,66 @@ void write_int(std::string& str, size_t val) {
     str.resize(result.ptr - str.data());
 }
 
+void write_float(std::string& str, FloatingPoint val) {
+    #if !defined(__GNUC__) || __GNUC__ > 8
+    constexpr size_t max_digits = 32;
+    str.resize(str.size() + max_digits);
+
+    // Append the number to the end of str
+    char* end = str.data() + str.size();
+    char* begin = end - max_digits;
+    std::to_chars_result result = std::to_chars(begin, end, val, std::chars_format::general);
+    assert(result.ec == std::errc());
+
+    // Trim size where prior allocation exceeded the actual need
+    str.resize(result.ptr - str.data());
+    #else
+    // Older GCC versions don't implement std::to_chars for floats
+    str += std::to_string(val);
+    #endif
+}
+
+FloatingPoint strdecimal2floatingpoint(std::string_view str) noexcept {
+    long double result;
+
+    #if !defined(__GNUC__) || __GNUC__ > 8
+    const auto parse_result = std::from_chars(str.data(), str.data() + str.size(), result, std::chars_format::fixed);
+    assert(parse_result.ptr != str.data()+str.size());
+    #else
+    result = std::strtold(str.data(), nullptr);
+    #endif
+
+    return result;
+}
+
+FloatingPoint strscientific2floatingpoint(std::string_view str) noexcept {
+    long double result;
+
+    #if !defined(__GNUC__) || __GNUC__ > 8
+    const auto parse_result = std::from_chars(str.data(), str.data() + str.size(), result, std::chars_format::scientific);
+    assert(parse_result.ptr != str.data()+str.size());
+    #else
+    result = std::strtold(str.data(), nullptr);
+    #endif
+
+    return result;
+}
+
 bool ckd_str2int(size_t* result, std::string_view str) noexcept {
+    assert(str.find('.') == std::string::npos);
+    assert(str.find('e') == std::string::npos);
+
     const auto parse_result = std::from_chars(str.data(), str.data() + str.size(), *result);
     assert(parse_result.ec != std::errc::invalid_argument);
+    assert(parse_result.ec == std::errc::result_out_of_range || parse_result.ptr == str.data()+str.size());
 
     return parse_result.ec == std::errc::result_out_of_range;
 }
 
 void str2bigint_NULL_TERMINATED__NOT_THREADSAFE(mpz_t f, std::string_view str) {
+    assert(str.find('.') == std::string::npos);
+    assert(str.find('e') == std::string::npos);
+
     // Get the end of the std::string_view, violating the purported immutability of std::string_view!
     // The byte past "str" must be valid owned memory! (std::string is specified to be null-terminated since C++11)
     // This also means the string cannot be read from another thread during this operation.
@@ -87,6 +139,7 @@ bool ckd_strdecimal2rat(NativeRational* result, std::string_view str) noexcept {
 
 bool ckd_strdecimal2rat(NativeRational* result, std::string_view str, size_t decimal_index) noexcept {
     assert(str.at(decimal_index) == '.');
+    assert(str.find('e') == std::string::npos);
 
     std::string_view lead = str.substr(0, decimal_index);
 
@@ -257,6 +310,7 @@ void strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::strin
 
 void strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::string_view str, size_t decimal_index) {
     assert(str.at(decimal_index) == '.');
+    assert(str.find('e') == std::string::npos);
 
     std::string_view lead = str.substr(0, decimal_index);
 
@@ -281,24 +335,59 @@ void strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::strin
     str2bigint_NULL_TERMINATED__NOT_THREADSAFE(fmpq_numref(tail), str_trail);
 
     if(str_trail.length() >= std::numeric_limits<size_t>::digits10){
-        _fmpz_promote(fmpq_denref(f));
-        flint_mpz_ui_pow_ui(COEFF_TO_PTR(fmpq_denref(f)), 10, str_trail.size());
+        _fmpz_promote(fmpq_denref(tail));
+        flint_mpz_ui_pow_ui(COEFF_TO_PTR(fmpq_denref(tail)), 10, str_trail.size());
     }else{
         fmpz_set_ui(fmpq_denref(tail), powers_of_ten[str_trail.size()]);
     }
     fmpq_canonicalise(tail);
 
+    fmpq_init(f);
     fmpq_add_fmpz(f, tail, lead);
     fmpq_clear(tail);
     fmpz_clear(lead);
 }
 
-void strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::string_view str, size_t decimal_index) {
-    // TODO
+void strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::string_view str) {
+    const auto decimal_index = str.find('.');
+    assert(decimal_index != std::string::npos);
+
+    const auto exponent_index = str.find('e', decimal_index);
+    assert(exponent_index != std::string::npos);
+
+    return strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(f, str, decimal_index, exponent_index);
 }
 
-void strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::string_view str_lead, std::string_view str_trail) {
-    // TODO
+void strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(
+    BigRational f, std::string_view str, size_t decimal_index, size_t e_index) {
+    strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE(f, str.substr(0, e_index));
+
+    e_index++;
+    auto target = fmpq_numref(f);
+    if(str[e_index] == '-'){
+        e_index++;
+        target = fmpq_denref(f);
+    }
+
+    fmpz_t copy;
+    fmpz_init_set(copy, target);
+
+    size_t exp;
+    if(ckd_10_exponent(exp, str.substr(e_index)) == false){
+        fmpz_mul_ui(target, copy, exp);
+    }else{
+        // TODO: should this be checked with a return? How do you handle unreasonable big num operations?
+        if(ckd_str2int(&exp, str.substr(e_index))) throw;
+
+        fmpz_t exponent;
+        fmpz_t ten;
+        fmpz_set_ui(ten, 10);
+        fmpz_pow_ui(exponent, ten, exp);
+        fmpz_mul(target, copy, exponent);
+        fmpz_clear(exponent);
+    }
+
+    fmpz_clear(copy);
 }
 
 static size_t numBase10DigitsLowerBound(const mpz_t val) noexcept {

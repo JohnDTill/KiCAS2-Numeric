@@ -16,6 +16,7 @@ typedef fmpq_t BigRational;
 
 bool isNegative(const BigInteger val) noexcept;
 void flipSign(BigInteger val) noexcept;
+void absValInPlace(BigRational val) noexcept;
 
 #ifndef NDEBUG
 bool isAllGmpMemoryFreed() noexcept;
