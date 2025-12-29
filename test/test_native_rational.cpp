@@ -132,8 +132,6 @@ TEST_CASE( "ckd_mul (NativeRational * NativeRational)" ) {
     REQUIRE(result.num == 12);
     REQUIRE(result.den == 35);
 
-    constexpr size_t MAX = std::numeric_limits<size_t>::max();
-
     // Want NUM not dividing MAX to avoid reductions making final non-canonical values unclear
     constexpr size_t NUM = 54321;
     static_assert(MAX % NUM != 0);
@@ -153,6 +151,56 @@ TEST_CASE( "ckd_mul (NativeRational * NativeRational)" ) {
     REQUIRE_FALSE(ckd_mul(&result, NativeRational(MAX, MAX), NativeRational(2, NUM)));
     REQUIRE(result.num == 2);
     REQUIRE(result.den == NUM);
+
+    REQUIRE(true == ckd_mul(&result, NativeRational(1, 2), NativeRational(1, MAX)));
+}
+
+TEST_CASE( "ckd_div (NativeRational / size_t)" ) {
+    NativeRational result;
+
+    REQUIRE_FALSE(ckd_div(&result, NativeRational(3, 5), 2));
+    REQUIRE(result.num == 3);
+    REQUIRE(result.den == 10);
+
+    REQUIRE_FALSE(ckd_div(&result, NativeRational(MAX, 2), MAX));
+    REQUIRE(result.num == 1);
+    REQUIRE(result.den == 2);
+
+    REQUIRE_FALSE(ckd_div(&result, NativeRational(MAX, MAX), 2));
+    REQUIRE(result.num == 1);
+    REQUIRE(result.den == 2);
+
+    REQUIRE(true == ckd_div(&result, NativeRational(MAX, MAX-2), 2));
+}
+
+TEST_CASE( "ckd_div (NativeRational / NativeRational)" ) {
+    NativeRational result;
+
+    REQUIRE_FALSE(ckd_div(&result, NativeRational(3, 5), NativeRational(4, 7)));
+    REQUIRE(result.num == 21);
+    REQUIRE(result.den == 20);
+
+    // Want NUM not dividing MAX to avoid reductions making final non-canonical values unclear
+    constexpr size_t NUM = 54321;
+    static_assert(MAX % NUM != 0);
+
+    REQUIRE_FALSE(ckd_div(&result, NativeRational(2, MAX), NativeRational(NUM, MAX)));
+    REQUIRE(result.num == 2);
+    REQUIRE(result.den == NUM);
+
+    REQUIRE_FALSE(ckd_div(&result, NativeRational(MAX, NUM), NativeRational(MAX, 2)));
+    REQUIRE(result.num == 2);
+    REQUIRE(result.den == NUM);
+
+    REQUIRE_FALSE(ckd_div(&result, NativeRational(2, NUM), NativeRational(MAX, MAX)));
+    REQUIRE(result.num == 2);
+    REQUIRE(result.den == NUM);
+
+    REQUIRE_FALSE(ckd_div(&result, NativeRational(MAX, MAX), NativeRational(NUM, 2)));
+    REQUIRE(result.num == 2);
+    REQUIRE(result.den == NUM);
+
+    REQUIRE(true == ckd_mul(&result, NativeRational(2, MAX-2), NativeRational(1, MAX)));
 }
 
 TEST_CASE( "ckd_add (NativeRational + size_t)" ) {

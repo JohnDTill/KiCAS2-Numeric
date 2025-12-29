@@ -201,6 +201,11 @@ void NativeRational::reduceInPlace() noexcept {
     }
 }
 
+NativeRational NativeRational::reciprocal() const noexcept {
+    assert(num != 0);
+    return NativeRational(den, num);
+}
+
 bool ckd_mul(NativeRational* result, NativeRational a, size_t b) noexcept {
     result->den = a.den;
     if(ckd_mul(&result->num, a.num, b) == false) return false;
@@ -263,6 +268,34 @@ bool ckd_mul(NativeRational* result, NativeRational a, NativeRational b) noexcep
     }
 
     return true;
+}
+
+bool ckd_div(NativeRational* result, NativeRational a, size_t b) noexcept {
+    assert(b != 0);
+
+    result->num = a.num;
+    if(ckd_mul(&result->den, a.den, b) == false) return false;
+
+    // Resist expanding if possible
+    const size_t gcd_a_num_b = std::gcd(a.num, b);
+    if(gcd_a_num_b != 1){
+        b /= gcd_a_num_b;
+        result->num /= gcd_a_num_b;
+        if(ckd_mul(&result->den, a.den, b) == false) return false;
+    }
+
+    const size_t gcd_a = std::gcd(a.num, a.den);
+    if(gcd_a != 1){
+        a.den /= gcd_a;
+        result->num /= gcd_a;
+        return ckd_mul(&result->den, a.den, b);
+    }
+
+    return true;
+}
+
+bool ckd_div(NativeRational* result, NativeRational a, NativeRational b) noexcept {
+    return ckd_mul(result, a, b.reciprocal());
 }
 
 bool ckd_add(NativeRational* result, NativeRational a, size_t b) noexcept {

@@ -26,6 +26,16 @@ TEST_CASE( "write_int" ) {
     REQUIRE(str == std::to_string(MAX));
 }
 
+TEST_CASE( "strdecimal2floatingpoint" ){
+    REQUIRE( std::abs(strdecimal2floatingpoint("4.2") - 4.2) < 1e-9 );
+    REQUIRE( std::abs(strdecimal2floatingpoint("1234") - 1234.0) < 1e-9 );
+}
+
+TEST_CASE( "strscientific2floatingpoint" ){
+    REQUIRE( std::abs(strscientific2floatingpoint("0.42e2")) - 42.0 < 1e-9 );
+    REQUIRE( std::abs(strscientific2floatingpoint("12.34e-2")) - 0.1234 < 1e-9 );
+}
+
 TEST_CASE( "ckd_str2int" ) {
     size_t result;
 
@@ -48,22 +58,34 @@ TEST_CASE( "ckd_str2int" ) {
 }
 
 TEST_CASE( "fmpz_set_str_NULL_TERMINATED_SOURCE__NOT_THREADSAFE" ) {
-    fmpz_t big_int;
-    fmpz_init(big_int);
-    fmpz_set_str_NULL_TERMINATED_SOURCE__NOT_THREADSAFE(big_int, std::string("0"));
-    REQUIRE(fmpz_get_si(big_int) == 0);
+    BigInteger big_int;
+    std::string input;
 
-    fmpz_set_str_NULL_TERMINATED_SOURCE__NOT_THREADSAFE(big_int, std::string("42"));
-    REQUIRE(fmpz_get_si(big_int) == 42);
+    input = "0";
+    str2bigint_NULL_TERMINATED__NOT_THREADSAFE(big_int, input);
+    REQUIRE(mpz_get_si(big_int) == 0);
+    REQUIRE(input == "0");
+    mpz_clear(big_int);
+    DEBUG_REQUIRE(isAllGmpMemoryFreed());
 
-    fmpz_t factorial_of_30;
-    fmpz_init(factorial_of_30);
-    fmpz_fac_ui(factorial_of_30, 30);
-    fmpz_set_str_NULL_TERMINATED_SOURCE__NOT_THREADSAFE(big_int, std::string("265252859812191058636308480000000"));
-    REQUIRE(fmpz_cmp(big_int, factorial_of_30) == 0);
+    input = "42";
+    str2bigint_NULL_TERMINATED__NOT_THREADSAFE(big_int, input);
+    REQUIRE(mpz_get_si(big_int) == 42);
+    REQUIRE(input == "42");
+    mpz_clear(big_int);
+    DEBUG_REQUIRE(isAllGmpMemoryFreed());
 
-    fmpz_clear(big_int);
-    fmpz_clear(factorial_of_30);
+    input = "265252859812191058636308480000000";
+    mpz_t factorial_of_30;
+    mpz_init(factorial_of_30);
+    mpz_fac_ui(factorial_of_30, 30);
+    str2bigint_NULL_TERMINATED__NOT_THREADSAFE(big_int, input);
+    REQUIRE(mpz_cmp(big_int, factorial_of_30) == 0);
+    REQUIRE(input == "265252859812191058636308480000000");
+
+    mpz_clear(big_int);
+    mpz_clear(factorial_of_30);
+    DEBUG_REQUIRE(isAllGmpMemoryFreed());
 }
 
 TEST_CASE( "write_rational" ) {
@@ -146,7 +168,7 @@ TEST_CASE( "ckd_strdecimal2rat" ) {
         test_str = "0." + std::string(std::numeric_limits<size_t>::digits10-1, '9');
         REQUIRE(false == ckd_strdecimal2rat(&result, test_str));
 
-        // // Test a combination of leading and trailing values which does not fit
+        // Test a combination of leading and trailing values which does not fit
         test_str = "999." + std::string(std::numeric_limits<size_t>::digits10-1, '9');
         REQUIRE(true == ckd_strdecimal2rat(&result, test_str));
 
@@ -156,4 +178,165 @@ TEST_CASE( "ckd_strdecimal2rat" ) {
         // Test a leading value which does not fit
         REQUIRE(true == ckd_strdecimal2rat(&result, "265252859812191058636308480000000.1"));
     }
+}
+
+TEST_CASE( "ckd_strscientific2rat" ) {
+    NativeRational result;
+
+    REQUIRE_FALSE(ckd_strscientific2rat(&result, "1.0e-2"));
+    REQUIRE(result.num == 1);
+    REQUIRE(result.den == 100);
+
+    REQUIRE_FALSE(ckd_strscientific2rat(&result, "0.1e-2"));
+    REQUIRE(result.num == 1);
+    REQUIRE(result.den == 1000);
+
+    REQUIRE_FALSE(ckd_strscientific2rat(&result, "1.01e2"));
+    REQUIRE(result.num == 10100);
+    REQUIRE(result.den == 100);
+
+    REQUIRE(true == ckd_strscientific2rat(&result, "1.0e20"));
+
+    REQUIRE(true == ckd_strscientific2rat(&result, "1.0e-20"));
+}
+
+TEST_CASE( "strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE" ) {
+    BigRational big_rat;
+    std::string input;
+
+    SECTION("Small decimal"){
+        input = "2.5";
+        strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE(big_rat, input);
+        REQUIRE(fmpz_get_ui(fmpq_numref(big_rat)) == 5);
+        REQUIRE(fmpz_get_ui(fmpq_denref(big_rat)) == 2);
+        REQUIRE(input == "2.5");
+        fmpq_clear(big_rat);
+        DEBUG_REQUIRE(isAllGmpMemoryFreed());
+    }
+
+    SECTION("Large integer with decimal zero"){
+        input = "265252859812191058636308480000000.0";
+        fmpz_t factorial_of_30;
+        fmpz_init(factorial_of_30);
+        fmpz_fac_ui(factorial_of_30, 30);
+        strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE(big_rat, input);
+        REQUIRE(fmpz_cmp(fmpq_numref(big_rat), factorial_of_30) == 0);
+        REQUIRE(fmpz_get_ui(fmpq_denref(big_rat)) == 1);
+        REQUIRE(input == "265252859812191058636308480000000.0");
+
+        fmpq_clear(big_rat);
+        fmpz_clear(factorial_of_30);
+        DEBUG_REQUIRE(isAllGmpMemoryFreed());
+    }
+
+    SECTION("Big rat"){
+        input = "265252859812191058636308480000000.5";
+        strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE(big_rat, input);
+        std::string out;
+        write_big_rational<false>(out, big_rat);
+        REQUIRE(out == "530505719624382117272616960000001/2");
+        REQUIRE(input == "265252859812191058636308480000000.5");
+        fmpq_clear(big_rat);
+        DEBUG_REQUIRE(isAllGmpMemoryFreed());
+    }
+}
+
+TEST_CASE( "write_big_int" ) {
+    std::string str = "x + ";
+    mpz_t big_num;
+
+    SECTION("Basic"){
+        mpz_init_set_ui(big_num, 42);
+        write_big_int(str, big_num);
+        REQUIRE(str == "x + 42");
+    }
+
+    SECTION("Negative"){
+        mpz_init_set_si(big_num, -42);
+        write_big_int(str, big_num);
+        REQUIRE(str == "x + -42");
+    }
+
+    SECTION("Big number"){
+        mpz_init(big_num);
+        mpz_fac_ui(big_num, 30);
+        write_big_int(str, big_num);
+        REQUIRE(str == "x + 265252859812191058636308480000000");
+    }
+
+    SECTION("Big number negative"){
+        mpz_init(big_num);
+        mpz_fac_ui(big_num, 30);
+        big_num->_mp_size *= -1;
+        write_big_int(str, big_num);
+        REQUIRE(str == "x + -265252859812191058636308480000000");
+    }
+
+    mpz_clear(big_num);
+
+    DEBUG_REQUIRE(isAllGmpMemoryFreed());
+}
+
+TEST_CASE( "write_big_rational" ) {
+    std::string str = "x + ";
+    fmpq_t big_num;
+    fmpq_init(big_num);
+    fmpz* num = fmpq_numref(big_num);
+    fmpz* den = fmpq_denref(big_num);
+
+    SECTION("plaintext basic"){
+        fmpq_set_ui(big_num, 3, 2);
+        write_big_rational<PLAINTEXT_OUTPUT>(str, big_num);
+        REQUIRE(str == "x + 3/2");
+    }
+
+    SECTION("typeset basic"){
+        fmpq_set_ui(big_num, 3, 2);
+        write_big_rational<TYPESET_OUTPUT>(str, big_num);
+        REQUIRE(str == "x + ⁜f⏴3⏵⏴2⏵");
+    }
+
+    SECTION("plaintext basic negative"){
+        fmpq_set_si(big_num, -3, 2);
+        write_big_rational<PLAINTEXT_OUTPUT>(str, big_num);
+        REQUIRE(str == "x + -3/2");
+    }
+
+    SECTION("typeset basic negative"){
+        fmpq_set_si(big_num, -3, 2);
+        write_big_rational<TYPESET_OUTPUT>(str, big_num);
+        REQUIRE(str == "x + -⁜f⏴3⏵⏴2⏵");
+    }
+
+    SECTION("plaintext big"){
+        fmpz_set_ui(num, 1);
+        fmpz_fac_ui(den, 30);
+        write_big_rational<PLAINTEXT_OUTPUT>(str, big_num);
+        REQUIRE(str == "x + 1/265252859812191058636308480000000");
+    }
+
+    SECTION("typeset big"){
+        fmpz_set_ui(num, 1);
+        fmpz_fac_ui(den, 30);
+        write_big_rational<TYPESET_OUTPUT>(str, big_num);
+        REQUIRE(str == "x + ⁜f⏴1⏵⏴265252859812191058636308480000000⏵");
+    }
+
+    SECTION("plaintext big negative"){
+        fmpz_set_si(num, -1);
+        fmpz_fac_ui(den, 30);
+        write_big_rational<PLAINTEXT_OUTPUT>(str, big_num);
+        REQUIRE(str == "x + -1/265252859812191058636308480000000");
+    }
+
+    SECTION("typeset big negative"){
+        fmpz_set_si(num, -1);
+        fmpz_fac_ui(den, 30);
+        write_big_rational<TYPESET_OUTPUT>(str, big_num);
+        REQUIRE(str == "x + -⁜f⏴1⏵⏴265252859812191058636308480000000⏵");
+    }
+
+    fmpq_clear(big_num);
+
+    DEBUG_REQUIRE(isAllGmpMemoryFreed());
 }

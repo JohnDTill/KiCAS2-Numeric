@@ -37,6 +37,8 @@ struct NativeRational {
     friend bool operator<=(NativeRational a, NativeRational b) noexcept;
 
     void reduceInPlace() noexcept;
+
+    NativeRational reciprocal() const noexcept;
 };
 
 /// Returns true if the calculation overflows.
@@ -46,6 +48,14 @@ bool ckd_mul(NativeRational* result, NativeRational a, size_t b) noexcept;
 /// Returns true if the calculation overflows
 /// reduction is performed if required to fit, but the result is NOT canonicalised
 bool ckd_mul(NativeRational* result, NativeRational a, NativeRational b) noexcept;
+
+/// Returns true if the calculation overflows.
+/// reduction is performed if required to fit, but the result is NOT canonicalised
+bool ckd_div(NativeRational* result, NativeRational a, size_t b) noexcept;
+
+/// Returns true if the calculation overflows
+/// reduction is performed if required to fit, but the result is NOT canonicalised
+bool ckd_div(NativeRational* result, NativeRational a, NativeRational b) noexcept;
 
 /// Returns true if the calculation overflows
 /// reduction is performed if required to fit, but the result is NOT canonicalised
