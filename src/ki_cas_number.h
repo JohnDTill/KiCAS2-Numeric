@@ -5,6 +5,7 @@
 #include "ki_cas_big_num_wrapper.h"
 #include "ki_cas_float.h"
 #include "ki_cas_native_rational.h"
+#include <stdint.h>
 #include <string>
 
 namespace KiCAS2 {
@@ -14,6 +15,7 @@ public:
     Number() noexcept;
     Number(Number&& num) noexcept;
     ~Number() noexcept;
+    operator FloatingPoint() const noexcept;
     void operator=(Number&& num) noexcept;
     void normaliseInPlace();
     static Number fromIntegerString(std::string_view str);
@@ -27,6 +29,10 @@ public:
     static Number fromScientificStringOverflowToFloat(std::string_view str) noexcept;
     static Number fromScientificStringOverflowToFloat(
         std::string_view str, size_t decimal_index, size_t e_index) noexcept;
+    static Number fromSciIntString(std::string_view str);
+    static Number fromSciIntString(std::string_view str, size_t e_index);
+    static Number fromSciIntStringOverflowToFloat(std::string_view str) noexcept;
+    static Number fromSciIntStringOverflowToFloat(std::string_view str, size_t e_index) noexcept;
     template<bool typeset_fraction> void writeString(std::string& str) const;
 
 private:
@@ -43,6 +49,7 @@ private:
     struct Data {
     public:
         ~Data() noexcept;
+        operator FloatingPoint() const noexcept;
         Tag getTag() const noexcept;
         void setTag(Tag set_tag) noexcept;
         inline size_t getPosInt() const noexcept;
@@ -72,6 +79,8 @@ private:
         void setFromScientificString(std::string_view str, size_t decimal_index, size_t e_index);
         void setFromScientificStringOverflowToFloat(
             std::string_view str, size_t decimal_index, size_t e_index) noexcept;
+        void setFromSciIntString(std::string_view str, size_t e_index);
+        void setFromSciIntStringOverflowToFloat(std::string_view str, size_t e_index) noexcept;
 
         void normaliseInPlace();
 
@@ -98,6 +107,8 @@ private:
         bool isFloatingPoint() const noexcept;
         #endif
     } data;
+
+    static uint8_t dispatchCode(Tag a, Tag b) noexcept;
 };
 
 }  // namespace KiCAS2

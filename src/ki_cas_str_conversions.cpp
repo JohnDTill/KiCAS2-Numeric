@@ -7,6 +7,14 @@
 
 namespace KiCAS2 {
 
+#ifndef NDEBUG
+bool spoof_bignum_path = false;
+#define DEBUG_DISABLE_SPOOF spoof_bignum_path = false;
+#else
+static constexpr bool spoof_bignum_path = false;
+#define DEBUG_DISABLE_SPOOF
+#endif
+
 void write_int(std::string& str, size_t val) {
     constexpr size_t max_digits = std::numeric_limits<size_t>::digits10 + 1;
     str.resize(str.size() + max_digits);
@@ -184,6 +192,45 @@ constexpr size_t powers_of_ten[] = {
 // Check this rather than specify it to make sure the macro worked
 static_assert(sizeof(powers_of_ten)/sizeof(size_t) == std::numeric_limits<size_t>::digits10);
 
+template<bool canRunOutOfFactors=false>
+inline void reducePowerOf10(size_t& powerOf10, size_t& other, std::string_view other_str) noexcept {
+    // The factors are:
+    //   Up to one instance of 2
+    //   Arbitrarily many instances of 5
+    //
+    // Since the factors are known, reducing here is cheap
+
+    if(canRunOutOfFactors && powerOf10 == 1) return;
+
+    // Remove a factor of 2
+    const bool is_even = (other % 2 == 0);
+    powerOf10 >>= is_even;
+    other >>= is_even;
+
+    if(canRunOutOfFactors && powerOf10 == 1) return;
+
+    // Remove all factors of 5
+    // The first factor has a cheap test given the string representation
+    const bool has_factor_of_5 = (other_str.back() == '5' || (canRunOutOfFactors && other_str.back() == '0'));
+    if(has_factor_of_5){
+        other /= 5;
+        powerOf10 /= 5;
+        if(canRunOutOfFactors && powerOf10 == 1) return;
+
+        size_t trail_div_5 = other / 5;
+        size_t trail_mod_5 = other % 5;
+        while(trail_mod_5 == 0){
+            other = trail_div_5;
+            assert(powerOf10 % 5 == 0);
+            powerOf10 /= 5;
+            if(canRunOutOfFactors && powerOf10 == 1) return;
+
+            trail_div_5 = other / 5;
+            trail_mod_5 = other % 5;
+        }
+    }
+}
+
 bool ckd_strdecimal2rat(NativeRational* result, std::string_view str_lead, std::string_view str_trail) noexcept {
     // Precondition: strings are from the same number source, separated by a decimal point
     assert(str_trail.data() == str_lead.data() + str_lead.size() + 1);
@@ -201,36 +248,7 @@ bool ckd_strdecimal2rat(NativeRational* result, std::string_view str_lead, std::
 
     // a.b = a + b/10^len(b)
     size_t den = powers_of_ten[str_trail.size()];
-
-    // The factors of the denominator are:
-    //   Up to one instance of 2
-    //   Arbitrarily many instances of 5
-    //
-    // Since the factors of the denominator are known, reducing here is cheap
-
-    // Remove a factor of 2
-    const bool is_even = (trail % 2 == 0);
-    den >>= is_even;
-    trail >>= is_even;
-
-    // Remove all factors of 5
-    // The first factor has a cheap test given the string representation
-    const bool has_factor_of_5 = (str_trail.back() == '5');
-    if(has_factor_of_5){
-        trail /= 5;
-        den /= 5;
-
-        size_t trail_div_5 = trail / 5;
-        size_t trail_mod_5 = trail % 5;
-        while(trail_mod_5 == 0){
-            trail = trail_div_5;
-            den /= 5;
-
-            trail_div_5 = trail / 5;
-            trail_mod_5 = trail % 5;
-        }
-    }
-
+    reducePowerOf10(den, trail, str_trail);
     result->den = den;
 
     // No further reduction attempted since the denominator is fully reduced.
@@ -299,6 +317,39 @@ bool ckd_strscientific2rat(NativeRational* result, std::string_view str, size_t 
         size_t power;
         return ckd_10_exponent(power, str.substr(e_index+1)) || ckd_mul(result, intermediate, power);
     }
+}
+
+bool ckd_strsciint2int(size_t* result, std::string_view str) noexcept {
+    return ckd_strsciint2int(result, str, str.find('e'));
+}
+
+bool ckd_strsciint2int(size_t* result, std::string_view str, size_t e_index) noexcept {
+    assert(str.find('.') == std::string::npos);
+    assert(str.at(e_index) == 'e');
+    assert(str.at(e_index+1) != '-');
+
+    size_t exp10;
+
+    return ckd_str2int(result, str.substr(0, e_index))
+           || ckd_10_exponent(exp10, str.substr(e_index+1))
+           || ckd_mul(result, *result, exp10);
+}
+
+bool ckd_strsciint2rat(NativeRational* result, std::string_view str) noexcept {
+    return ckd_strsciint2rat(result, str, str.find('e'));
+}
+
+bool ckd_strsciint2rat(NativeRational* result, std::string_view str, size_t e_index) noexcept {
+    assert(str.find('.') == std::string::npos);
+    assert(str.at(e_index) == 'e');
+    assert(str.at(e_index+1) == '-');
+
+    if(ckd_str2int(&result->num, str.substr(0, e_index))
+        || ckd_10_exponent(result->den, str.substr(e_index+2))) return true;
+
+    reducePowerOf10<true>(result->den, result->num, str.substr(0, e_index));
+
+    return false;
 }
 
 void strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::string_view str) {
@@ -376,7 +427,7 @@ void strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(
     size_t exp;
     if(ckd_10_exponent(exp, str) == false){
         fmpz_mul_ui(target, copy, exp);
-    }else if(ckd_str2int(&exp, str) == false){
+    }else if(ckd_str2int(&exp, str) == false && !spoof_bignum_path){
         fmpz_t exponent;
         fmpz_init(exponent);
         fmpz_t ten;
@@ -385,7 +436,10 @@ void strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(
         fmpz_mul(target, copy, exponent);
         fmpz_clear(exponent);
     }else{
+        DEBUG_DISABLE_SPOOF
+
         fmpz_t exponent;
+        fmpz_init(exponent);
         fmpz_t exp;
         str2bigint_NULL_TERMINATED__NOT_THREADSAFE(exp, str);
         fmpz_t ten;
@@ -397,6 +451,82 @@ void strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(
     }
 
     fmpz_clear(copy);
+}
+
+void strsciint2bigint_NULL_TERMINATED__NOT_THREADSAFE(BigInteger f, std::string_view str) {
+    strsciint2bigint_NULL_TERMINATED__NOT_THREADSAFE(f, str, str.find('e'));
+}
+
+void strsciint2bigint_NULL_TERMINATED__NOT_THREADSAFE(BigInteger f, std::string_view str, size_t e_index) {
+    assert(str.find('.') == std::string::npos);
+    assert(str.at(e_index) == 'e');
+    assert(str.at(e_index+1) != '-');
+
+    str2bigint_NULL_TERMINATED__NOT_THREADSAFE(f, str.substr(0, e_index));
+
+    std::string_view exp_str = str.substr(e_index+1);
+
+    size_t exp10;
+    if(ckd_10_exponent(exp10, exp_str) == false){
+        mpz_mul_ui(f, f, exp10);
+    }else if(ckd_str2int(&exp10, exp_str) == false && !spoof_bignum_path){
+        mpz_t power_of_10;
+        mpz_init(power_of_10);
+        mpz_ui_pow_ui(power_of_10, 10, exp10);
+        mpz_mul(f, f, power_of_10);
+        mpz_clear(power_of_10);
+    }else{
+        DEBUG_DISABLE_SPOOF
+
+        fmpz_t exp;
+        str2bigint_NULL_TERMINATED__NOT_THREADSAFE(exp, exp_str);
+
+        fmpz_t ten;
+        fmpz_init_set_ui(ten, 10);
+
+        fmpz_t power_of_10;
+        fmpz_init(power_of_10);
+        fmpz_pow_fmpz(power_of_10, ten, exp);
+
+        mpz_mul(f, f, COEFF_TO_PTR(*power_of_10));
+        fmpz_clear(exp);
+        fmpz_clear(power_of_10);
+    }
+}
+
+void strsciint2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::string_view str) {
+    strsciint2bigrat_NULL_TERMINATED__NOT_THREADSAFE(f, str, str.find('e'));
+}
+
+void strsciint2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::string_view str, size_t e_index) {
+    assert(str.find('.') == std::string::npos);
+    assert(str.at(e_index) == 'e');
+    assert(str.at(e_index+1) == '-');
+
+    str2bigint_NULL_TERMINATED__NOT_THREADSAFE(fmpq_numref(f), str.substr(0, e_index));
+
+    std::string_view exp_str = str.substr(e_index+2);
+
+    size_t exp10;
+    if(ckd_10_exponent(exp10, exp_str) == false){
+        fmpz_set_ui(fmpq_denref(f), exp10);
+    }else if(ckd_str2int(&exp10, exp_str) == false && !spoof_bignum_path){
+        fmpz_init_set_ui(fmpq_denref(f), 10);
+        fmpz_pow_ui(fmpq_denref(f), fmpq_denref(f), exp10);
+    }else{
+        DEBUG_DISABLE_SPOOF
+
+        fmpz_t exp;
+        str2bigint_NULL_TERMINATED__NOT_THREADSAFE(exp, exp_str);
+
+        fmpz_t ten;
+        fmpz_init_set_ui(ten, 10);
+
+        fmpz_init(fmpq_denref(f));
+        fmpz_pow_fmpz(fmpq_denref(f), ten, exp);
+
+        fmpz_clear(exp);
+    }
 }
 
 static size_t numBase10DigitsLowerBound(const mpz_t val) noexcept {

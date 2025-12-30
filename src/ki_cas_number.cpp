@@ -17,6 +17,10 @@ Number::Number(Number&& num) noexcept {
 
 Number::~Number() noexcept {}
 
+Number::operator FloatingPoint() const noexcept {
+    return static_cast<FloatingPoint>(data);
+}
+
 void Number::operator=(Number&& num) noexcept {
     data = num.data;
     num.data.setTag(PosInt);  // Overwrite tag to prevent big num deallocation
@@ -97,6 +101,30 @@ Number Number::fromScientificStringOverflowToFloat(
     return num;
 }
 
+Number Number::fromSciIntString(std::string_view str) {
+    return fromSciIntString(str, str.find('e'));
+}
+
+Number Number::fromSciIntString(std::string_view str, size_t e_index) {
+    Number num;
+    num.data.setFromSciIntString(str, e_index);
+    return num;
+}
+
+Number Number::fromSciIntStringOverflowToFloat(std::string_view str) noexcept {
+    return fromSciIntStringOverflowToFloat(str, str.find('e'));
+}
+
+Number Number::fromSciIntStringOverflowToFloat(std::string_view str, size_t e_index) noexcept {
+    Number num;
+    num.data.setFromSciIntStringOverflowToFloat(str, e_index);
+    return num;
+}
+
+uint8_t Number::dispatchCode(Tag a, Tag b) noexcept {
+    return (static_cast<uint8_t>(a) << 4) + static_cast<uint8_t>(b);
+}
+
 template<bool typeset_fraction> void Number::writeString(std::string& str) const {
     switch (data.getTag()) {
         case PosInt: write_int(str, data.getPosInt()); break;
@@ -118,6 +146,19 @@ Number::Data::~Data() noexcept {
         case BigInt: mpz_clear(data.big_int); break;
         case BigRat: fmpq_clear(data.big_rational); break;
         default: break;
+    }
+}
+
+Number::Data::operator FloatingPoint() const noexcept {
+    switch(tag){
+        case PosInt: return static_cast<FloatingPoint>(data.machine_int);
+        case NegInt: return -static_cast<FloatingPoint>(data.machine_int);
+        case PosRat: return static_cast<FloatingPoint>(data.native_rational);
+        case NegRat: return -static_cast<FloatingPoint>(data.native_rational);
+        case BigInt: return mpz_get_d(data.big_int);
+        case BigRat: return fmpq_get_d(data.big_rational);
+        case Float: return data.floating_point;
+        default: assert(false); return 0.0;
     }
 }
 
@@ -294,6 +335,46 @@ void Number::Data::setFromScientificStringOverflowToFloat(
     }else{
         data.floating_point = strscientific2floatingpoint(str);
         tag = Float;
+    }
+}
+
+void Number::Data::setFromSciIntString(std::string_view str, size_t e_index) {
+    assert(str[e_index] == 'e');
+    const bool is_negative = str[e_index+1] == '-';
+    if(is_negative){
+        if(ckd_strsciint2rat(&data.native_rational, str, e_index) == false){
+            tag = PosRat;
+        }else{
+            strsciint2bigrat_NULL_TERMINATED__NOT_THREADSAFE(data.big_rational, str, e_index);
+            tag = BigRat;
+        }
+    }else{
+        if(ckd_strsciint2int(&data.machine_int, str, e_index) == false){
+            tag = PosInt;
+        }else{
+            strsciint2bigint_NULL_TERMINATED__NOT_THREADSAFE(data.big_int, str, e_index);
+            tag = BigInt;
+        }
+    }
+}
+
+void Number::Data::setFromSciIntStringOverflowToFloat(std::string_view str, size_t e_index) noexcept {
+    assert(str[e_index] == 'e');
+    const bool is_negative = str[e_index+1] == '-';
+    if(is_negative){
+        if(ckd_strsciint2rat(&data.native_rational, str, e_index) == false){
+            tag = PosRat;
+        }else{
+            data.floating_point = strscientific2floatingpoint(str);
+            tag = Float;
+        }
+    }else{
+        if(ckd_strsciint2int(&data.machine_int, str, e_index) == false){
+            tag = PosInt;
+        }else{
+            data.floating_point = strscientific2floatingpoint(str);
+            tag = Float;
+        }
     }
 }
 

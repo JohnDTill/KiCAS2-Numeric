@@ -60,6 +60,18 @@ bool ckd_strscientific2rat(NativeRational* result, std::string_view str) noexcep
 bool ckd_strscientific2rat(
     NativeRational* result, std::string_view str, size_t decimal_index, size_t e_index) noexcept;
 
+/// Set an integer from a string. Returns true if the value is too large to fit.
+bool ckd_strsciint2int(size_t* result, std::string_view str) noexcept;
+
+/// Set an integer from a string. Returns true if the value is too large to fit.
+bool ckd_strsciint2int(size_t* result, std::string_view str, size_t e_index) noexcept;
+
+/// Set an NativeRational from a string. Returns true if the value is too large to fit.
+bool ckd_strsciint2rat(NativeRational* result, std::string_view str) noexcept;
+
+/// Set an NativeRational from a string. Returns true if the value is too large to fit.
+bool ckd_strsciint2rat(NativeRational* result, std::string_view str, size_t e_index) noexcept;
+
 /// Set a big rational from a decimal number string.
 /// @warning The underlying string must be null-terminated and not accessed in another thread. Neither
 ///          precondition is verifiable here.
@@ -86,6 +98,26 @@ void strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::st
 ///          precondition is verifiable here.
 void strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(
     BigRational f, std::string_view str, size_t decimal_index, size_t e_index);
+
+/// Set a big integer from a scientific integer string with positive exponent.
+/// @warning The underlying string must be null-terminated and not accessed in another thread. Neither
+///          precondition is verifiable here.
+void strsciint2bigint_NULL_TERMINATED__NOT_THREADSAFE(BigInteger f, std::string_view str);
+
+/// Set a big integer from a scientific integer string with positive exponent.
+/// @warning The underlying string must be null-terminated and not accessed in another thread. Neither
+///          precondition is verifiable here.
+void strsciint2bigint_NULL_TERMINATED__NOT_THREADSAFE(BigInteger f, std::string_view str, size_t e_index);
+
+/// Set a big rational from a scientific integer string with negative exponent.
+/// @warning The underlying string must be null-terminated and not accessed in another thread. Neither
+///          precondition is verifiable here.
+void strsciint2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::string_view str);
+
+/// Set a big rational from a scientific integer string with negative exponent.
+/// @warning The underlying string must be null-terminated and not accessed in another thread. Neither
+///          precondition is verifiable here.
+void strsciint2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::string_view str, size_t e_index);
 
 /// Append a big integer to the end of the string
 void write_big_int(std::string& str, const BigInteger val);

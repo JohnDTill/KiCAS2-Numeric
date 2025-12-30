@@ -148,3 +148,54 @@ TEST_CASE( "fromScientificString" ) {
 
     DEBUG_REQUIRE(isAllGmpMemoryFreed());
 }
+
+TEST_CASE( "fromSciIntString" ) {
+    std::string in;
+    std::string out;
+
+    SECTION("Native int"){
+        in = "3e2";
+        Number num = Number::fromSciIntString(in);
+        num.writeString<false>(out);
+        REQUIRE(out == "300");
+    }
+
+    SECTION("Native rat"){
+        in = "3e-2";
+        Number num = Number::fromSciIntString(in);
+        num.writeString<false>(out);
+        REQUIRE(out == "3/100");
+    }
+
+    SECTION("Big int"){
+        in = "3e25";
+        Number num = Number::fromSciIntString(in);
+        num.writeString<false>(out);
+        REQUIRE(out == "30000000000000000000000000");
+    }
+
+    SECTION("Big rat"){
+        in = "3e-25";
+        Number num = Number::fromSciIntString(in);
+        num.writeString<false>(out);
+        REQUIRE(out == "3/10000000000000000000000000");
+    }
+
+#if !defined(__GNUC__) || __GNUC__ > 8
+    SECTION("Float Positive"){
+        in = "3e25";
+        Number num = Number::fromSciIntStringOverflowToFloat(in);
+        num.writeString<false>(out);
+        REQUIRE(out == "3e+25");
+    }
+
+    SECTION("Float Negative"){
+        in = "3e-25";
+        Number num = Number::fromSciIntStringOverflowToFloat(in);
+        num.writeString<false>(out);
+        REQUIRE(out == "3e-25");
+    }
+#endif
+
+    DEBUG_REQUIRE(isAllGmpMemoryFreed());
+}

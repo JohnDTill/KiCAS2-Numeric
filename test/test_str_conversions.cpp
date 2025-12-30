@@ -6,6 +6,10 @@ using namespace KiCAS2;
 
 static constexpr size_t MAX = std::numeric_limits<size_t>::max();
 
+#ifndef NDEBUG
+namespace KiCAS2 { extern bool spoof_bignum_path; }
+#endif
+
 TEST_CASE( "write_int" ) {
     std::string str;
 
@@ -200,6 +204,36 @@ TEST_CASE( "ckd_strscientific2rat" ) {
     REQUIRE(true == ckd_strscientific2rat(&result, "1.0e-20"));
 }
 
+TEST_CASE( "ckd_strsciint2int" ) {
+    size_t result;
+
+    REQUIRE_FALSE(ckd_strsciint2int(&result, "5e2"));
+    REQUIRE(result == 500);
+
+    REQUIRE_FALSE(ckd_strsciint2int(&result, "5e0"));
+    REQUIRE(result == 5);
+
+    REQUIRE(true == ckd_strsciint2int(&result, "5e30"));
+}
+
+TEST_CASE( "ckd_strsciint2rat" ) {
+    NativeRational result;
+
+    REQUIRE_FALSE(ckd_strsciint2rat(&result, "5e-2"));
+    REQUIRE(result.num == 1);
+    REQUIRE(result.den == 20);
+
+    REQUIRE_FALSE(ckd_strsciint2rat(&result, "5e-0"));
+    REQUIRE(result.num == 5);
+    REQUIRE(result.den == 1);
+
+    REQUIRE_FALSE(ckd_strsciint2rat(&result, "100e-1"));
+    REQUIRE(result.num == 10);
+    REQUIRE(result.den == 1);
+
+    REQUIRE(true == ckd_strsciint2rat(&result, "5e-30"));
+}
+
 TEST_CASE( "strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE" ) {
     BigRational big_rat;
     std::string input;
@@ -239,6 +273,120 @@ TEST_CASE( "strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE" ) {
         fmpq_clear(big_rat);
         DEBUG_REQUIRE(isAllGmpMemoryFreed());
     }
+}
+
+TEST_CASE( "strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE" ) {
+    BigRational big_rat;
+    std::string input;
+
+    SECTION("Small decimal"){
+        input = "2.5e-1";
+        strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(big_rat, input);
+        fmpq_canonicalise(big_rat);
+        REQUIRE(fmpz_get_ui(fmpq_numref(big_rat)) == 1);
+        REQUIRE(fmpz_get_ui(fmpq_denref(big_rat)) == 4);
+        REQUIRE(input == "2.5e-1");
+        fmpq_clear(big_rat);
+        DEBUG_REQUIRE(isAllGmpMemoryFreed());
+    }
+
+    SECTION("Large exponent"){
+        input = "0.3e-24";
+        strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(big_rat, input);
+        REQUIRE(std::string(fmpq_get_str(nullptr, 10, big_rat)) == "3/10000000000000000000000000");
+        REQUIRE(input == "0.3e-24");
+        fmpq_clear(big_rat);
+        DEBUG_REQUIRE(isAllGmpMemoryFreed());
+    }
+
+    #ifndef NDEBUG
+    SECTION("Large exponent big exponent path"){
+        spoof_bignum_path = true;
+        input = "0.3e-24";
+        strscientific2bigrat_NULL_TERMINATED__NOT_THREADSAFE(big_rat, input);
+        REQUIRE(std::string(fmpq_get_str(nullptr, 10, big_rat)) == "3/10000000000000000000000000");
+        REQUIRE(input == "0.3e-24");
+        fmpq_clear(big_rat);
+        DEBUG_REQUIRE(isAllGmpMemoryFreed());
+        DEBUG_REQUIRE_FALSE(spoof_bignum_path);  // Confirm bignum path was taken
+    }
+    #endif
+}
+
+TEST_CASE( "strsciint2bigint_NULL_TERMINATED__NOT_THREADSAFE" ) {
+    BigInteger big_int;
+    std::string input;
+
+    SECTION("Small number"){
+        input = "1e2";
+        strsciint2bigint_NULL_TERMINATED__NOT_THREADSAFE(big_int, input);
+        REQUIRE(mpz_get_ui(big_int) == 100);
+        REQUIRE(input == "1e2");
+        mpz_clear(big_int);
+        DEBUG_REQUIRE(isAllGmpMemoryFreed());
+    }
+
+    SECTION("Big number"){
+        input = "1e25";
+        strsciint2bigint_NULL_TERMINATED__NOT_THREADSAFE(big_int, input);
+        fmpz alias = PTR_TO_COEFF(big_int);
+        REQUIRE(std::string(fmpz_get_str(nullptr, 10, &alias)) == "10000000000000000000000000");
+        REQUIRE(input == "1e25");
+        mpz_clear(big_int);
+        DEBUG_REQUIRE(isAllGmpMemoryFreed());
+    }
+
+    #ifndef NDEBUG
+    SECTION("Big number big exponent path"){
+        spoof_bignum_path = true;
+        input = "1e25";
+        strsciint2bigint_NULL_TERMINATED__NOT_THREADSAFE(big_int, input);
+        fmpz alias = PTR_TO_COEFF(big_int);
+        REQUIRE(std::string(fmpz_get_str(nullptr, 10, &alias)) == "10000000000000000000000000");
+        REQUIRE(input == "1e25");
+        mpz_clear(big_int);
+        DEBUG_REQUIRE(isAllGmpMemoryFreed());
+        DEBUG_REQUIRE_FALSE(spoof_bignum_path);  // Confirm bignum path was taken
+    }
+    #endif
+}
+
+TEST_CASE( "strsciint2bigrat_NULL_TERMINATED__NOT_THREADSAFE" ) {
+    BigRational big_rat;
+    std::string input;
+
+    SECTION("Small number"){
+        input = "2e-1";
+        strsciint2bigrat_NULL_TERMINATED__NOT_THREADSAFE(big_rat, input);
+        fmpq_canonicalise(big_rat);
+        REQUIRE(fmpz_get_ui(fmpq_numref(big_rat)) == 1);
+        REQUIRE(fmpz_get_ui(fmpq_denref(big_rat)) == 5);
+        REQUIRE(input == "2e-1");
+        fmpq_clear(big_rat);
+        DEBUG_REQUIRE(isAllGmpMemoryFreed());
+    }
+
+    SECTION("Big number"){
+        input = "1e-25";
+        strsciint2bigrat_NULL_TERMINATED__NOT_THREADSAFE(big_rat, input);
+        REQUIRE(std::string(fmpq_get_str(nullptr, 10, big_rat)) == "1/10000000000000000000000000");
+        REQUIRE(input == "1e-25");
+        fmpq_clear(big_rat);
+        DEBUG_REQUIRE(isAllGmpMemoryFreed());
+    }
+
+    #ifndef NDEBUG
+    SECTION("Big number big exponent path"){
+        spoof_bignum_path = true;
+        input = "1e-25";
+        strsciint2bigrat_NULL_TERMINATED__NOT_THREADSAFE(big_rat, input);
+        REQUIRE(std::string(fmpq_get_str(nullptr, 10, big_rat)) == "1/10000000000000000000000000");
+        REQUIRE(input == "1e-25");
+        fmpq_clear(big_rat);
+        DEBUG_REQUIRE(isAllGmpMemoryFreed());
+        DEBUG_REQUIRE_FALSE(spoof_bignum_path);  // Confirm bignum path was taken
+    }
+    #endif
 }
 
 TEST_CASE( "write_big_int" ) {
