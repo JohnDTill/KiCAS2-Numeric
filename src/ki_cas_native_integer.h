@@ -1,7 +1,8 @@
-#ifndef KI_CAS_INTEGER_MATH_H
-#define KI_CAS_INTEGER_MATH_H
+#ifndef KI_CAS_NATIVE_INTEGER_H
+#define KI_CAS_NATIVE_INTEGER_H
 
 #include <stddef.h>
+#include <string>
 
 namespace KiCAS2 {
 
@@ -32,6 +33,16 @@ bool ckd_pow(size_t* result, size_t base, size_t power) noexcept;
 /// Incudes debug assertion that the calculation does not overflow
 size_t knownfit_pow(size_t base, size_t power) noexcept;
 
+/// Append an integer to the end of the string
+void write_native_int(std::string& str, size_t val);
+
+/// Set an integer from a string of the form `['0' - '9']+`. Returns true if the value is too large to fit.
+bool ckd_str2int(size_t* result, std::string_view str) noexcept;
+
+/// Set an integer from a string of the form `['0' - '9']+`.
+/// Incudes debug assertion that the conversion does not overflow.
+size_t knownfit_str2int(std::string_view str) noexcept;
+
 }  // namespace KiCAS2
 
-#endif // KI_CAS_INTEGER_MATH_H
+#endif // KI_CAS_NATIVE_INTEGER_H

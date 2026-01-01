@@ -1,6 +1,7 @@
-#include "ki_cas_integer_math.h"
+#include "ki_cas_native_integer.h"
 
 #include <cassert>
+#include <charconv>
 #include <cmath>
 
 #if __cplusplus >= 202302L
@@ -102,6 +103,42 @@ size_t knownfit_pow(size_t base, size_t power) noexcept {
     const size_t tmp = knownfit_pow(base, power/2);
     if(power%2 == 0) return knownfit_mul(tmp, tmp);
     else return knownfit_mul(base, knownfit_mul(tmp, tmp));
+}
+
+void write_native_int(std::string& str, size_t val) {
+    constexpr size_t max_digits = std::numeric_limits<size_t>::digits10 + 1;
+    char buffer[max_digits];
+    const std::to_chars_result result = std::to_chars(buffer, buffer + max_digits, val);
+    assert(result.ec == std::errc());
+    str.append(buffer, result.ptr - buffer);
+}
+
+bool ckd_str2int(size_t* result, std::string_view str) noexcept {
+    assert(!str.empty());
+    #ifndef NDEBUG
+    for(const char ch : str) assert(ch >= '0' && ch <= '9');
+    #endif
+
+    const auto parse_result = std::from_chars(str.data(), str.data() + str.size(), *result);
+    assert(parse_result.ec != std::errc::invalid_argument);
+    assert(parse_result.ec == std::errc::result_out_of_range || parse_result.ptr == str.data()+str.size());
+
+    return parse_result.ec == std::errc::result_out_of_range;
+}
+
+size_t knownfit_str2int(std::string_view str) noexcept {
+    assert(!str.empty());
+    #ifndef NDEBUG
+    for(const char ch : str) assert(ch >= '0' && ch <= '9');
+    #endif
+
+    size_t result;
+    const auto parse_result = std::from_chars(str.data(), str.data() + str.size(), result);
+    assert(parse_result.ec != std::errc::invalid_argument);
+    assert(parse_result.ec != std::errc::result_out_of_range);
+    assert(parse_result.ptr == str.data()+str.size());
+
+    return result;
 }
 
 }  // namespace KiCAS2

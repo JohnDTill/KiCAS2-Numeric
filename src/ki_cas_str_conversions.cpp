@@ -2,7 +2,8 @@
 
 #include <cassert>
 #include <charconv>
-#include "ki_cas_integer_math.h"
+#include "ki_cas_native_integer.h"
+#include "ki_cas_native_rational.h"
 #include <limits>
 
 namespace KiCAS2 {
@@ -14,76 +15,6 @@ bool spoof_bignum_path = false;
 static constexpr bool spoof_bignum_path = false;
 #define DEBUG_DISABLE_SPOOF
 #endif
-
-void write_int(std::string& str, size_t val) {
-    constexpr size_t max_digits = std::numeric_limits<size_t>::digits10 + 1;
-    str.resize(str.size() + max_digits);
-
-    // Append the number to the end of str
-    char* end = str.data() + str.size();
-    char* begin = end - max_digits;
-    std::to_chars_result result = std::to_chars(begin, end, val);
-    assert(result.ec == std::errc());
-
-    // Trim size where prior allocation exceeded the actual need
-    str.resize(result.ptr - str.data());
-}
-
-void write_float(std::string& str, FloatingPoint val) {
-    #if !defined(__GNUC__) || __GNUC__ > 8
-    constexpr size_t max_digits = 64;
-    str.resize(str.size() + max_digits);
-
-    // Append the number to the end of str
-    char* end = str.data() + str.size();
-    char* begin = end - max_digits;
-    std::to_chars_result result = std::to_chars(begin, end, val, std::chars_format::general);
-    assert(result.ec == std::errc());
-
-    // Trim size where prior allocation exceeded the actual need
-    str.resize(result.ptr - str.data());
-    #else
-    // Older GCC versions don't implement std::to_chars for floats
-    str += std::to_string(val);
-    #endif
-}
-
-FloatingPoint strdecimal2floatingpoint(std::string_view str) noexcept {
-    long double result;
-
-    #if !defined(__GNUC__) || __GNUC__ > 8
-    const auto parse_result = std::from_chars(str.data(), str.data() + str.size(), result, std::chars_format::fixed);
-    assert(parse_result.ptr == str.data()+str.size());
-    #else
-    result = std::strtold(str.data(), nullptr);
-    #endif
-
-    return result;
-}
-
-FloatingPoint strscientific2floatingpoint(std::string_view str) noexcept {
-    long double result;
-
-    #if !defined(__GNUC__) || __GNUC__ > 8
-    const auto parse_result = std::from_chars(str.data(), str.data() + str.size(), result, std::chars_format::scientific);
-    assert(parse_result.ptr == str.data()+str.size());
-    #else
-    result = std::strtold(str.data(), nullptr);
-    #endif
-
-    return result;
-}
-
-bool ckd_str2int(size_t* result, std::string_view str) noexcept {
-    assert(str.find('.') == std::string::npos);
-    assert(str.find('e') == std::string::npos);
-
-    const auto parse_result = std::from_chars(str.data(), str.data() + str.size(), *result);
-    assert(parse_result.ec != std::errc::invalid_argument);
-    assert(parse_result.ec == std::errc::result_out_of_range || parse_result.ptr == str.data()+str.size());
-
-    return parse_result.ec == std::errc::result_out_of_range;
-}
 
 void str2bigint_NULL_TERMINATED__NOT_THREADSAFE(mpz_t f, std::string_view str) {
     assert(str.find('.') == std::string::npos);
@@ -126,45 +57,6 @@ void str2bigint_NULL_TERMINATED__NOT_THREADSAFE(fmpz_t f, std::string_view str) 
     *end_const_discarded = backup;
 }
 
-template<bool typeset_fraction>
-void write_rational(std::string& str, NativeRational val) {
-    if(typeset_fraction) str += "⁜f⏴";
-    write_int(str, val.num);
-    if(typeset_fraction) str += "⏵⏴";
-    else str += '/';
-    write_int(str, val.den);
-    if(typeset_fraction) str += "⏵";
-}
-template void write_rational<false>(std::string&, NativeRational);
-template void write_rational<true>(std::string&, NativeRational);
-
-bool ckd_strdecimal2rat(NativeRational* result, std::string_view str) noexcept {
-    const auto decimal_index = str.find('.');
-    assert(decimal_index != std::string::npos);
-
-    return ckd_strdecimal2rat(result, str, decimal_index);
-}
-
-bool ckd_strdecimal2rat(NativeRational* result, std::string_view str, size_t decimal_index) noexcept {
-    assert(str.at(decimal_index) == '.');
-    assert(str.find('e') == std::string::npos);
-
-    std::string_view lead = str.substr(0, decimal_index);
-
-    // Omit trailing zeros
-    size_t back_index = str.size()-1;
-    while(str[back_index] == '0') back_index--;
-
-    if(back_index == decimal_index){
-        // Only trailing zeros, e.g. "2.0"
-        result->den = 1;
-        return ckd_str2int(&result->num, lead);
-    }else{
-        std::string_view trail = str.substr(decimal_index+1, back_index-decimal_index);
-        return ckd_strdecimal2rat(result, lead, trail);
-    }
-}
-
 constexpr size_t powers_of_ten[] = {
     1,
     10,
@@ -192,71 +84,6 @@ constexpr size_t powers_of_ten[] = {
 // Check this rather than specify it to make sure the macro worked
 static_assert(sizeof(powers_of_ten)/sizeof(size_t) == std::numeric_limits<size_t>::digits10);
 
-template<bool canRunOutOfFactors=false>
-inline void reducePowerOf10(size_t& powerOf10, size_t& other, std::string_view other_str) noexcept {
-    // The factors are:
-    //   Up to one instance of 2
-    //   Arbitrarily many instances of 5
-    //
-    // Since the factors are known, reducing here is cheap
-
-    if(canRunOutOfFactors && powerOf10 == 1) return;
-
-    // Remove a factor of 2
-    const bool is_even = (other % 2 == 0);
-    powerOf10 >>= is_even;
-    other >>= is_even;
-
-    if(canRunOutOfFactors && powerOf10 == 1) return;
-
-    // Remove all factors of 5
-    // The first factor has a cheap test given the string representation
-    const bool has_factor_of_5 = (other_str.back() == '5' || (canRunOutOfFactors && other_str.back() == '0'));
-    if(has_factor_of_5){
-        other /= 5;
-        powerOf10 /= 5;
-        if(canRunOutOfFactors && powerOf10 == 1) return;
-
-        size_t trail_div_5 = other / 5;
-        size_t trail_mod_5 = other % 5;
-        while(trail_mod_5 == 0){
-            other = trail_div_5;
-            assert(powerOf10 % 5 == 0);
-            powerOf10 /= 5;
-            if(canRunOutOfFactors && powerOf10 == 1) return;
-
-            trail_div_5 = other / 5;
-            trail_mod_5 = other % 5;
-        }
-    }
-}
-
-bool ckd_strdecimal2rat(NativeRational* result, std::string_view str_lead, std::string_view str_trail) noexcept {
-    // Precondition: strings are from the same number source, separated by a decimal point
-    assert(str_trail.data() == str_lead.data() + str_lead.size() + 1);
-    assert(*(str_lead.data() + str_lead.size()) == '.');
-    assert(*(str_trail.data() - 1) == '.');
-
-    // Precondition: there are no trailing zeros
-    assert(str_trail.back() != '0');
-
-    if(str_trail.size() >= std::numeric_limits<size_t>::digits10) return true;
-
-    size_t lead;
-    size_t trail;
-    if(ckd_str2int(&lead, str_lead) || ckd_str2int(&trail, str_trail)) return true;
-
-    // a.b = a + b/10^len(b)
-    size_t den = powers_of_ten[str_trail.size()];
-    reducePowerOf10(den, trail, str_trail);
-    result->den = den;
-
-    // No further reduction attempted since the denominator is fully reduced.
-
-    size_t lead_times_den;
-    return ckd_mul(&lead_times_den, lead, den) || ckd_add(&result->num, lead_times_den, trail);
-}
-
 inline bool ckd_10_exponent(size_t& result, std::string_view str) noexcept {
 #if defined(__x86_64__) || defined(__aarch64__) || defined( _WIN64 )  // 64-bit
     if(str.length() > 2){
@@ -277,79 +104,6 @@ inline bool ckd_10_exponent(size_t& result, std::string_view str) noexcept {
     result = powers_of_ten[exp];
     return false;
 #endif
-}
-
-bool ckd_strscientific2rat(NativeRational* result, std::string_view str) noexcept {
-    const auto decimal_index = str.find('.');
-    assert(decimal_index != std::string::npos);
-
-    const auto exponent_index = str.find('e', decimal_index);
-    assert(exponent_index != std::string::npos);
-
-    return ckd_strscientific2rat(result, str, decimal_index, exponent_index);
-}
-
-bool ckd_strscientific2rat(NativeRational* result, std::string_view str, size_t decimal_index, size_t e_index) noexcept {
-    assert(str.at(decimal_index) == '.');
-    assert(str.at(e_index) == 'e');
-    assert(str.length() > e_index+1);
-
-    std::string_view lead = str.substr(0, decimal_index);
-
-    // Omit trailing zeros
-    size_t back_index = e_index-1;
-    while(str[back_index] == '0') back_index--;
-
-    NativeRational intermediate;
-    if(back_index == decimal_index){
-        // Only trailing zeros, e.g. "2.0"
-        intermediate.den = 1;
-        if(ckd_str2int(&intermediate.num, lead)) return true;
-    }else{
-        std::string_view trail = str.substr(decimal_index+1, back_index-decimal_index);
-        if(ckd_strdecimal2rat(&intermediate, lead, trail)) return true;
-    }
-
-    if(str[e_index+1] == '-'){
-        size_t power;
-        return ckd_10_exponent(power, str.substr(e_index+2)) || ckd_div(result, intermediate, power);
-    }else{
-        size_t power;
-        return ckd_10_exponent(power, str.substr(e_index+1)) || ckd_mul(result, intermediate, power);
-    }
-}
-
-bool ckd_strsciint2int(size_t* result, std::string_view str) noexcept {
-    return ckd_strsciint2int(result, str, str.find('e'));
-}
-
-bool ckd_strsciint2int(size_t* result, std::string_view str, size_t e_index) noexcept {
-    assert(str.find('.') == std::string::npos);
-    assert(str.at(e_index) == 'e');
-    assert(str.at(e_index+1) != '-');
-
-    size_t exp10;
-
-    return ckd_str2int(result, str.substr(0, e_index))
-           || ckd_10_exponent(exp10, str.substr(e_index+1))
-           || ckd_mul(result, *result, exp10);
-}
-
-bool ckd_strsciint2rat(NativeRational* result, std::string_view str) noexcept {
-    return ckd_strsciint2rat(result, str, str.find('e'));
-}
-
-bool ckd_strsciint2rat(NativeRational* result, std::string_view str, size_t e_index) noexcept {
-    assert(str.find('.') == std::string::npos);
-    assert(str.at(e_index) == 'e');
-    assert(str.at(e_index+1) == '-');
-
-    if(ckd_str2int(&result->num, str.substr(0, e_index))
-        || ckd_10_exponent(result->den, str.substr(e_index+2))) return true;
-
-    reducePowerOf10<true>(result->den, result->num, str.substr(0, e_index));
-
-    return false;
 }
 
 void strdecimal2bigrat_NULL_TERMINATED__NOT_THREADSAFE(BigRational f, std::string_view str) {

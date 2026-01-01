@@ -17,6 +17,7 @@ typedef fmpq_t BigRational;
 bool isNegative(const BigInteger val) noexcept;
 void flipSign(BigInteger val) noexcept;
 void absValInPlace(BigRational val) noexcept;
+void mpz_init_set_ui_mul_ui(mpz_t ans, ulong lhs, ulong rhs);
 
 #ifndef NDEBUG
 bool isAllGmpMemoryFreed() noexcept;

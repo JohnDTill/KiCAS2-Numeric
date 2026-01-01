@@ -2,6 +2,7 @@
 #define KI_CAS_NATIVE_RATIONAL_H
 
 #include <stddef.h>
+#include <string>
 
 namespace KiCAS2 {
 
@@ -36,6 +37,7 @@ struct NativeRational {
     friend bool operator<(NativeRational a, NativeRational b) noexcept;
     friend bool operator<=(NativeRational a, NativeRational b) noexcept;
 
+    /// Canonicalise by eliminating common factors in numerator and denominator
     void reduceInPlace() noexcept;
 
     NativeRational reciprocal() const noexcept;
@@ -78,6 +80,37 @@ bool ckd_sub(NativeRational* result, size_t a, NativeRational b) noexcept;
 /// Requires a > b, asserts otherwise
 /// reduction is performed if required to fit, but the result is NOT canonicalised
 bool ckd_sub(NativeRational* result, NativeRational a, NativeRational b) noexcept;
+
+/// Flag indicating text output should be plaintext
+inline constexpr bool PLAINTEXT_OUTPUT = false;
+
+/// Flag indicating text output should be typeset
+inline constexpr bool TYPESET_OUTPUT = true;
+
+/// Append a rational to the end of the string
+template<bool typeset_fraction> void write_native_rational(std::string& str, NativeRational val);
+
+/// Set a NativeRational from a string of the form `'.' ['0'-'9']*`.
+/// The resulting NativeRational is fully reduced.
+/// Returns true if the value is too large to fit.
+bool ckd_strdecimaltail2rat(NativeRational* result, std::string_view str) noexcept;
+
+/// Set a NativeRational from a string of the form `(['0'-'9']+ '.' ['0'-'9']*) | ['0'-'9']* '.' ['0'-'9']+`.
+/// The resulting NativeRational is fully reduced.
+/// Returns true if the value is too large to fit.
+bool ckd_strdecimal2rat(NativeRational* result, std::string_view str) noexcept;
+
+/// Set a NativeRational from a string of the form `(['0'-'9']+ '.' ['0'-'9']*) | ['0'-'9']* '.' ['0'-'9']+`.
+/// The resulting NativeRational is fully reduced.
+/// Returns true if the value is too large to fit.
+bool ckd_strdecimal2rat(NativeRational* result, std::string_view str, size_t decimal_index) noexcept;
+
+/// Set a NativeRational from a string of the form:
+/// `['0'-'9']+ ('.' ['0'-'9']*)? 'e' ('+' | '-')? ['0'-'9']+`.
+/// or `'.' ['0'-'9']+ 'e' ('+' | '-')? ['0'-'9']+`
+/// The resulting NativeRational is fully reduced.
+/// Returns true if the value is too large to fit.
+bool ckd_strscientific2rat(NativeRational* result, std::string_view str) noexcept;
 
 }  // namespace KiCAS2
 

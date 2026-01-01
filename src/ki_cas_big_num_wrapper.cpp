@@ -21,6 +21,11 @@ void absValInPlace(BigRational val) noexcept {
     val->num &= ~(1uLL << (8*sizeof(size_t)-1));
 }
 
+void mpz_init_set_ui_mul_ui(mpz_t ans, mp_limb_t lhs, mp_limb_t rhs) {
+    mpz_init_set_ui(ans, lhs);
+    mpz_mul_ui(ans, ans, rhs);
+}
+
 #ifndef NDEBUG
 static std::allocator<size_t> allocator;
 static std::unordered_set<const void*> allocated_memory;
