@@ -1,7 +1,7 @@
-name: C++ Integration Tests
+name: C++ Tests
 on: push
 jobs:
-  cpp-integration-tests:
+  cpp-tests:
     strategy:
       fail-fast: false
       matrix:
@@ -122,7 +122,7 @@ jobs:
             BUILD_CONFIG_CMAKE="--config RelWithDebInfo"
           fi
 
-          cmake --build build_test --target IntegrationTests $BUILD_CONFIG_CMAKE
+          cmake --build build_test --target Tests $BUILD_CONFIG_CMAKE
 
       - name: Test
         shell: bash
