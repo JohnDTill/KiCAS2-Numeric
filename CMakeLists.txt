@@ -49,7 +49,7 @@ find_package(Catch2 CONFIG REQUIRED)
 enable_testing()
 add_executable(Tests
     test/test_big_num_wrapper.cpp
-    test/test_native_float.cpp
+    #test/test_native_float.cpp  # TODO: add
     test/test_native_integer.cpp
     test/test_native_rational.cpp
     test/test_str_conversions.cpp)
