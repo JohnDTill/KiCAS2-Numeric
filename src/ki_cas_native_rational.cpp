@@ -443,7 +443,7 @@ constexpr size_t powers_of_ten[] = {
     10000000000000000,
     100000000000000000,
     1000000000000000000,
-    10000000000000000000,
+    10000000000000000000uLL,
 #endif
 };
 
@@ -461,8 +461,8 @@ constexpr size_t powers_of_five[] = {
     78125,
     390625,
     1953125,
-#if defined(__x86_64__) || defined(__aarch64__) || defined( _WIN64 )  // 64-bit
     9765625,
+#if defined(__x86_64__) || defined(__aarch64__) || defined( _WIN64 )  // 64-bit
     48828125,
     244140625,
     1220703125,
@@ -472,9 +472,10 @@ constexpr size_t powers_of_five[] = {
     762939453125,
     3814697265625,
     19073486328125,
+    95367431640625,
 #endif
 };
-static_assert(sizeof(powers_of_five)/sizeof(size_t) == std::numeric_limits<size_t>::digits10+1);
+static_assert(sizeof(powers_of_five)/sizeof(size_t) == std::numeric_limits<size_t>::digits10+2);
 
 bool ckd_strdecimaltail2rat(NativeRational* result, std::string_view str) noexcept {
     assert(str.at(0) == '.');
