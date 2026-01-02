@@ -2,7 +2,6 @@
 
 #include "ki_cas_native_integer.h"
 #include <cassert>
-#include <inttypes.h>
 #include <limits>
 #include <numeric>
 
@@ -10,6 +9,8 @@
 static_assert(sizeof(size_t)*8 == 32);
 #include <cstdint>
 #endif
+
+#include <iostream>  // TODO: delete
 
 #if defined(_MSC_VER) && defined(_M_ARM64)  // 64-bit ARM MSVC
 // MSVC on arm64 does not have any way to multiply 128-bit numbers using intrinsics.
@@ -234,6 +235,23 @@ bool ckd_mul(NativeRational* result, NativeRational a, NativeRational b) noexcep
     if(ckd_mul(&result->num, a.num, b.num) == false && ckd_mul(&result->den, a.den, b.den) == false)
         return false;
 
+    const size_t gcd_a = std::gcd(a.num, a.den);
+    if(gcd_a != 1){
+        a.num /= gcd_a;
+        a.den /= gcd_a;
+
+        if(ckd_mul(&result->num, a.num, b.num) == false && ckd_mul(&result->den, a.den, b.den) == false)
+            return false;
+    }
+
+    const size_t gcd_b = std::gcd(b.num, b.den);
+    if(gcd_b != 1){
+        b.num /= gcd_b;
+        b.den /= gcd_b;
+
+        return ckd_mul(&result->num, a.num, b.num) || ckd_mul(&result->den, a.den, b.den);
+    }
+
     const size_t gcd_a_num_b_den = std::gcd(a.num, b.den);
     if(gcd_a_num_b_den != 1){
         a.num /= gcd_a_num_b_den;
@@ -250,23 +268,6 @@ bool ckd_mul(NativeRational* result, NativeRational a, NativeRational b) noexcep
 
         if(ckd_mul(&result->num, a.num, b.num) == false && ckd_mul(&result->den, a.den, b.den) == false)
             return false;
-    }
-
-    const size_t gcd_a = std::gcd(a.num, a.den);
-    if(gcd_a != 1){
-        a.num /= gcd_a;
-        a.den /= gcd_a;
-
-        if(ckd_mul(&result->num, a.num, b.num) == false && ckd_mul(&result->den, a.den, b.den) == false)
-            return false;
-    }
-
-    const size_t gcd_b = std::gcd(b.num, b.den);
-    if(gcd_b != 1){
-        b.num /= gcd_b;
-        b.den /= gcd_b;
-
-        return ckd_mul(&result->num, a.num, b.num) || ckd_mul(&result->den, a.den, b.den);
     }
 
     return true;
@@ -333,6 +334,12 @@ bool ckd_add(NativeRational* result, NativeRational a, NativeRational b) noexcep
 
     const size_t a_den_divisor = knownfit_mul(gcd_a, gcd_a_den_b_den);
     const size_t b_den_divior = knownfit_mul(gcd_b, gcd_a_den_b_den);
+
+    std::cout << "gcd_a_den_b_den = " << gcd_a_den_b_den << std::endl;
+    std::cout << "gcd_a = " << gcd_a << std::endl;
+    std::cout << "gcd_b = " << gcd_b << std::endl;
+    std::cout << "a_den_divisor = " << a_den_divisor << std::endl;
+    std::cout << "b_den_divior = " << b_den_divior << std::endl;
 
     if(a_den_divisor != 1) a.den /= a_den_divisor;
     if(b_den_divior != 1) b.den /= b_den_divior;

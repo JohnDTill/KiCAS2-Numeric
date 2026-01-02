@@ -41,7 +41,6 @@ target_link_libraries(ki_cas_numeric_lib Threads::Threads)
 
 set_target_properties(ki_cas_numeric_lib PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(ki_cas_numeric_lib PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
-set_target_properties(ki_cas_numeric_lib PROPERTIES PUBLIC_HEADER src/ki_cas_native_rational.h)
 set_target_properties(ki_cas_numeric_lib PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 # Testing setup
@@ -58,4 +57,11 @@ target_include_directories(Tests PUBLIC src)
 target_link_libraries(Tests PRIVATE ki_cas_numeric_lib Catch2::Catch2WithMain)
 add_test(NAME Tests COMMAND Tests)
 
-# TODO: add benchmarks
+# Benchmark setup
+add_executable(Benchmarks
+    benchmark/benchmark_big_num_wrapper.cpp
+    benchmark/benchmark_native_rational.cpp)
+set_property(TARGET Benchmarks PROPERTY INTERPROCEDURAL_OPTIMIZATION OFF)
+target_include_directories(Benchmarks PUBLIC src)
+target_link_libraries(Benchmarks PRIVATE ki_cas_numeric_lib Catch2::Catch2WithMain)
+add_test(NAME Benchmarks COMMAND Benchmarks)

@@ -45,13 +45,20 @@ template<bool constant_str> void mpz_init_set_strview(mpz_t f, std::string_view 
     assert(str.find('e') == std::string::npos);
 
     if(str.size() < std::numeric_limits<size_t>::digits10){
-        mpz_init_set_ui(f, knownfit_str2int(str));  // TODO: benchmark this shortcircuit
+        mpz_init_set_ui(f, knownfit_str2int(str));
+    #if (!defined(__x86_64__) && !defined(__aarch64__) && !defined(_WIN64)) || !defined(_MSC_VER)
+    }else if(str.size() < std::numeric_limits<WideType>::digits10){
+        const DoubleInt val = knownfit_str2wideint(str);
+        mpz_init(f);
+        fmpz ptr = PTR_TO_COEFF(f);
+        fmpz_set_uiui(&ptr, val.high, val.low);
+    #endif
     }else if(constant_str){
         std::string copy(str);
         mpz_init(f);
         const auto code = mpz_set_str(f, copy.data(), 10);
         assert(code == 0);
-    }else{  // TODO: benchmark this path
+    }else{
         // Get the end of the std::string_view, violating the purported immutability of std::string_view!
         // The byte past "str" must be valid owned memory! (std::string is specified to be null-terminated since C++11)
         // This also means the string cannot be read from another thread during this operation.
@@ -78,9 +85,9 @@ template<bool constant_str> void fmpz_init_set_strview(fmpz_t f, std::string_vie
     assert(str.find('e') == std::string::npos);
 
     if(str.size() < std::numeric_limits<size_t>::digits10){
-        fmpz_init_set_ui(f, knownfit_str2int(str));  // TODO: benchmark this shortcircuit
+        fmpz_init_set_ui(f, knownfit_str2int(str));
     #if (!defined(__x86_64__) && !defined(__aarch64__) && !defined(_WIN64)) || !defined(_MSC_VER)
-    }else if(str.size() < std::numeric_limits<WideType>::digits10){  // TODO: benchmark this shortcircuit
+    }else if(str.size() < std::numeric_limits<WideType>::digits10){
         const DoubleInt val = knownfit_str2wideint(str);
         fmpz_init(f);
         fmpz_set_uiui(f, val.high, val.low);
@@ -90,7 +97,7 @@ template<bool constant_str> void fmpz_init_set_strview(fmpz_t f, std::string_vie
         fmpz_init(f);
         const auto code = fmpz_set_str(f, copy.data(), 10);
         assert(code == 0);
-    }else{  // TODO: benchmark this path
+    }else{
         // Get the end of the std::string_view, violating the purported immutability of std::string_view!
         // The byte past "str" must be valid owned memory! (std::string is specified to be null-terminated since C++11)
         // This also means the string cannot be read from another thread during this operation.

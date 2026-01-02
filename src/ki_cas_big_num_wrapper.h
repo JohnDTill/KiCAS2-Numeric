@@ -50,7 +50,7 @@ template<bool constant_str=true> void fmpz_init_set_strview(fmpz_t f, std::strin
 void write_big_int(std::string& str, const mpz_t val);
 
 /// Append an fmpq_t to the end of the string
-template<bool typeset_fraction> void write_big_rational(std::string& str, const fmpq_t val);
+template<bool typeset_fraction=false> void write_big_rational(std::string& str, const fmpq_t val);
 
 #ifndef NDEBUG
 bool isAllGmpMemoryFreed() noexcept;
