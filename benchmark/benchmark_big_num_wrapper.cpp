@@ -16,7 +16,7 @@ TEST_CASE("fmpz_init_set_strview (tiny)") {
 
     BENCHMARK_ADVANCED( "fmpz_set_str" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
-        meter.measure([&](){fmpz_init(big_int); fmpz_set_str(big_int, str.data(), 10);});
+        meter.measure([&](){fmpz_init(big_int); fmpz_set_str(big_int, str.c_str(), 10);});
         fmpz_clear(big_int);
     };
 };
@@ -32,7 +32,7 @@ TEST_CASE("fmpz_init_set_strview (Flint word size)") {
 
     BENCHMARK_ADVANCED( "fmpz_set_str" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
-        meter.measure([&](){fmpz_init(big_int); fmpz_set_str(big_int, str.data(), 10);});
+        meter.measure([&](){fmpz_init(big_int); fmpz_set_str(big_int, str.c_str(), 10);});
         fmpz_clear(big_int);
     };
 };
@@ -48,7 +48,7 @@ TEST_CASE("fmpz_init_set_strview (Flint word size x2)") {
 
     BENCHMARK_ADVANCED( "fmpz_set_str" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
-        meter.measure([&](){fmpz_init(big_int); fmpz_set_str(big_int, str.data(), 10);});
+        meter.measure([&](){fmpz_init(big_int); fmpz_set_str(big_int, str.c_str(), 10);});
         fmpz_clear(big_int);
     };
 };
@@ -66,7 +66,7 @@ TEST_CASE("fmpz_init_set_strview (Flint word size x3)") {
 
     BENCHMARK_ADVANCED( "fmpz_set_str" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
-        meter.measure([&](){fmpz_init(big_int); fmpz_set_str(big_int, str.data(), 10);});
+        meter.measure([&](){fmpz_init(big_int); fmpz_set_str(big_int, str.c_str(), 10);});
         fmpz_clear(big_int);
     };
 };
@@ -82,7 +82,7 @@ TEST_CASE("mpz_init_set_strview (tiny)") {
 
     BENCHMARK_ADVANCED( "mpz_set_str" )(Catch::Benchmark::Chronometer meter) {
         mpz_t big_int;
-        meter.measure([&](){mpz_init(big_int); mpz_set_str(big_int, str.data(), 10);});
+        meter.measure([&](){mpz_init(big_int); mpz_set_str(big_int, str.c_str(), 10);});
         mpz_clear(big_int);
     };
 };
@@ -98,7 +98,7 @@ TEST_CASE("mpz_init_set_strview (word size)") {
 
     BENCHMARK_ADVANCED( "mpz_set_str" )(Catch::Benchmark::Chronometer meter) {
         mpz_t big_int;
-        meter.measure([&](){mpz_init(big_int); mpz_set_str(big_int, str.data(), 10);});
+        meter.measure([&](){mpz_init(big_int); mpz_set_str(big_int, str.c_str(), 10);});
         mpz_clear(big_int);
     };
 };
@@ -114,7 +114,7 @@ TEST_CASE("mpz_init_set_strview (Flint word size x2)") {
 
     BENCHMARK_ADVANCED( "mpz_set_str" )(Catch::Benchmark::Chronometer meter) {
         mpz_t big_int;
-        meter.measure([&](){mpz_init(big_int); mpz_set_str(big_int, str.data(), 10);});
+        meter.measure([&](){mpz_init(big_int); mpz_set_str(big_int, str.c_str(), 10);});
         mpz_clear(big_int);
     };
 };
@@ -132,7 +132,7 @@ TEST_CASE("mpz_init_set_strview (Flint word size x3)") {
 
     BENCHMARK_ADVANCED( "mpz_set_str" )(Catch::Benchmark::Chronometer meter) {
         mpz_t big_int;
-        meter.measure([&](){mpz_init(big_int); mpz_set_str(big_int, str.data(), 10);});
+        meter.measure([&](){mpz_init(big_int); mpz_set_str(big_int, str.c_str(), 10);});
         mpz_clear(big_int);
     };
 };
@@ -146,7 +146,7 @@ static fmpq naiveDecimalParse(std::string_view str){
     fmpz num = fmpz_from_strview(str.substr(decimal_index+1));
     fmpz den = 0;
     fmpz_10_pow_ui(&den, str.size()-(decimal_index+1));
-    fmpq_t tail {num, den};
+    fmpq_t tail {{num, den}};
     fmpq_canonicalise(tail);
 
     fmpq_add_fmpz(tail, tail, &lead);
