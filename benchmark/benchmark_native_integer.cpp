@@ -16,7 +16,7 @@ TEST_CASE("ckd_sqrt") {
         REQUIRE(ans == root);
     };
 
-    BENCHMARK_ADVANCED( "ckd_sqrt" )(Catch::Benchmark::Chronometer meter) {
+    BENCHMARK_ADVANCED( "n_sqrt" )(Catch::Benchmark::Chronometer meter) {
         size_t ans;
         meter.measure([&](){ans = n_sqrt(square); return ans*ans*ans != square;});
         REQUIRE(ans == root);
