@@ -123,4 +123,9 @@ jobs:
 
       - name: Benchmark
         shell: bash
-        run: ./build_test/Benchmarks
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            ./build_test/Release/Benchmarks.exe
+          else
+            ./build_test/Benchmarks
+          fi
