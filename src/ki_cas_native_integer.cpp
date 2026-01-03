@@ -132,7 +132,7 @@ size_t knownfit_str2int(std::string_view str) noexcept {
     for(const char ch : str) assert(ch >= '0' && ch <= '9');
     #endif
 
-    #if defined(_MSC_VER) && !defined(_WIN64)  // 32-bit
+    #if defined(_MSC_VER)
     // MSVC x86 implementations of std::from_chars are prone to crash when parsing size_t
     uint64_t result;
     const auto parse_result = std::from_chars(str.data(), str.data() + str.size(), result);
