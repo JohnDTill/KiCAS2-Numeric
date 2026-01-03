@@ -133,7 +133,16 @@ size_t knownfit_str2int(std::string_view str) noexcept {
     #endif
 
     size_t result;
+    // TODO: sort this mess
+    #ifdef _MSC_VER
+    std::string copy(str);
+    const char* c_str = copy.c_str();
+    const auto parse_result = std::from_chars(c_str, c_str + str.size(), result);
+    // const auto parse_result = std::from_chars(str.cbegin()._Unwrapped(), str.cend()._Unwrapped(), result);
+    // const auto parse_result = std::from_chars(&(*str.cbegin()), &(*str.cbegin()) + str.size(), result);
+    #else
     const auto parse_result = std::from_chars(str.data(), str.data() + str.size(), result);
+    #endif
     assert(parse_result.ec != std::errc::invalid_argument);
     assert(parse_result.ec != std::errc::result_out_of_range);
     assert(parse_result.ptr == str.data()+str.size());

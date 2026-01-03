@@ -10,8 +10,6 @@
 #include <unordered_set>
 #endif
 
-#include <iostream>  // TODO: delete
-
 namespace KiCAS2 {
 
 bool mpz_is_neg(const mpz_t op) noexcept {
@@ -83,13 +81,8 @@ void mpz_init_set_strview(mpz_t f, std::string_view str) {
     for(const char ch : str) assert(ch >= '0' && ch <= '9');
     #endif
 
-    std::cout << "digits10 = " << std::numeric_limits<size_t>::digits10 << std::endl;
     if(str.size() <= std::numeric_limits<size_t>::digits10){
-        // mpz_init_set_ui(f, knownfit_str2int(str));
-        const size_t n = knownfit_str2int(str);
-        std::cout << "Assigning " << n << std::endl;
-        mpz_init(f);
-        mpz_set_ui(f, n);
+        mpz_init_set_ui(f, knownfit_str2int(str));
     #if (!defined(__x86_64__) && !defined(__aarch64__) && !defined(_WIN64)) || !defined(_MSC_VER)
     }else if(str.size() <= std::numeric_limits<WideType>::digits10){
         const DoubleInt val = knownfit_str2wideint(str);
