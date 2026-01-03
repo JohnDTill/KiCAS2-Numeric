@@ -6,7 +6,7 @@
 using namespace KiCAS2;
 
 TEST_CASE("fmpz_init_set_strview (tiny)") {
-    const std::string str = "1337";
+    const std::string_view str = "1337";
 
     BENCHMARK_ADVANCED( "fmpz_init_set_strview" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
@@ -16,13 +16,14 @@ TEST_CASE("fmpz_init_set_strview (tiny)") {
 
     BENCHMARK_ADVANCED( "fmpz_set_str" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
-        meter.measure([&](){fmpz_init(big_int); fmpz_set_str(big_int, str.c_str(), 10);});
+        meter.measure([&](){fmpz_init(big_int); std::string copy(str); fmpz_set_str(big_int, copy.c_str(), 10);});
         fmpz_clear(big_int);
     };
 };
 
 TEST_CASE("fmpz_init_set_strview (Flint word size)") {
-    const std::string str = std::to_string(COEFF_MAX);
+    const std::string src = std::to_string(COEFF_MAX);
+    const std::string_view str(src);
 
     BENCHMARK_ADVANCED( "fmpz_init_set_strview" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
@@ -32,13 +33,14 @@ TEST_CASE("fmpz_init_set_strview (Flint word size)") {
 
     BENCHMARK_ADVANCED( "fmpz_set_str" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
-        meter.measure([&](){fmpz_init(big_int); fmpz_set_str(big_int, str.c_str(), 10);});
+        meter.measure([&](){fmpz_init(big_int); std::string copy(str); fmpz_set_str(big_int, copy.c_str(), 10);});
         fmpz_clear(big_int);
     };
 };
 
 TEST_CASE("fmpz_init_set_strview (Flint word size x2)") {
-    const std::string str = std::to_string(std::numeric_limits<size_t>::max()) + "00";
+    const std::string src = std::to_string(std::numeric_limits<size_t>::max()) + "00";
+    const std::string_view str(src);
 
     BENCHMARK_ADVANCED( "fmpz_init_set_strview" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
@@ -48,15 +50,16 @@ TEST_CASE("fmpz_init_set_strview (Flint word size x2)") {
 
     BENCHMARK_ADVANCED( "fmpz_set_str" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
-        meter.measure([&](){fmpz_init(big_int); fmpz_set_str(big_int, str.c_str(), 10);});
+        meter.measure([&](){fmpz_init(big_int); std::string copy(str); fmpz_set_str(big_int, copy.c_str(), 10);});
         fmpz_clear(big_int);
     };
 };
 
 TEST_CASE("fmpz_init_set_strview (Flint word size x3)") {
-    const std::string str = std::to_string(std::numeric_limits<size_t>::max())
+    const std::string src = std::to_string(std::numeric_limits<size_t>::max())
                           + std::to_string(std::numeric_limits<size_t>::max())
                           + "0000";
+    const std::string_view str(src);
 
     BENCHMARK_ADVANCED( "fmpz_init_set_strview" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
@@ -66,7 +69,7 @@ TEST_CASE("fmpz_init_set_strview (Flint word size x3)") {
 
     BENCHMARK_ADVANCED( "fmpz_set_str" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
-        meter.measure([&](){fmpz_init(big_int); fmpz_set_str(big_int, str.c_str(), 10);});
+        meter.measure([&](){fmpz_init(big_int); std::string copy(str); fmpz_set_str(big_int, copy.c_str(), 10);});
         fmpz_clear(big_int);
     };
 };
