@@ -158,34 +158,34 @@ TEST_CASE( "mpz_init_set_strview (unsafe)" ) {
     std::string input;
 
     input = "0";
-    mpz_init_set_strview<ALLOW_STRING_MODIFICATION>(big_int, input);
+    mpz_init_set_mutable_str(big_int, input, 0, 1);
     REQUIRE(mpz_get_si(big_int) == 0);
     REQUIRE(input == "0");
     mpz_clear(big_int);
     DEBUG_REQUIRE(isAllGmpMemoryFreed());
 
     input = "42";
-    mpz_init_set_strview<ALLOW_STRING_MODIFICATION>(big_int, input);
+    mpz_init_set_mutable_str(big_int, input, 0, 2);
     REQUIRE(mpz_get_si(big_int) == 42);
     REQUIRE(input == "42");
     mpz_clear(big_int);
     DEBUG_REQUIRE(isAllGmpMemoryFreed());
 
     input = std::to_string(MAX);
-    mpz_init_set_strview<ALLOW_STRING_MODIFICATION>(big_int, input);
+    mpz_init_set_mutable_str(big_int, input, 0, input.size());
     char buffer[128];
     REQUIRE(mpz_get_str(buffer, 10, big_int) == std::to_string(MAX));
     REQUIRE(input == std::to_string(MAX));
     mpz_clear(big_int);
     DEBUG_REQUIRE(isAllGmpMemoryFreed());
 
-    input = "265252859812191058636308480000000";
+    input = "x = 265252859812191058636308480000000";
     mpz_t factorial_of_30;
     mpz_init(factorial_of_30);
     mpz_fac_ui(factorial_of_30, 30);
-    mpz_init_set_strview<ALLOW_STRING_MODIFICATION>(big_int, input);
+    mpz_init_set_mutable_str(big_int, input, 4, input.size()-4);
     REQUIRE(mpz_cmp(big_int, factorial_of_30) == 0);
-    REQUIRE(input == "265252859812191058636308480000000");
+    REQUIRE(input == "x = 265252859812191058636308480000000");
 
     mpz_clear(big_int);
     mpz_clear(factorial_of_30);
@@ -221,38 +221,38 @@ TEST_CASE( "fmpz_init_set_strview (safe)" ) {
     DEBUG_REQUIRE(isAllGmpMemoryFreed());
 }
 
-TEST_CASE( "fmpz_init_set_strview (unsafe)" ) {
+TEST_CASE( "fmpz_init_set_mutable_str" ) {
     fmpz_t big_int;
     std::string input;
 
     input = "0";
-    fmpz_init_set_strview<ALLOW_STRING_MODIFICATION>(big_int, input);
+    fmpz_init_set_mutable_str(big_int, input, 0, 1);
     REQUIRE(fmpz_get_si(big_int) == 0);
     REQUIRE(input == "0");
     fmpz_clear(big_int);
     DEBUG_REQUIRE(isAllGmpMemoryFreed());
 
     input = "42";
-    fmpz_init_set_strview<ALLOW_STRING_MODIFICATION>(big_int, input);
+    fmpz_init_set_mutable_str(big_int, input, 0, 2);
     REQUIRE(fmpz_get_si(big_int) == 42);
     REQUIRE(input == "42");
     fmpz_clear(big_int);
     DEBUG_REQUIRE(isAllGmpMemoryFreed());
 
     input = std::to_string(MAX);
-    fmpz_init_set_strview<ALLOW_STRING_MODIFICATION>(big_int, input);
+    fmpz_init_set_mutable_str(big_int, input, 0, input.size());
     REQUIRE(fmpz_get_ui(big_int) == MAX);
     REQUIRE(input == std::to_string(MAX));
     fmpz_clear(big_int);
     DEBUG_REQUIRE(isAllGmpMemoryFreed());
 
-    input = "265252859812191058636308480000000";
+    input = "x = 265252859812191058636308480000000";
     fmpz_t factorial_of_30;
     fmpz_init(factorial_of_30);
     fmpz_fac_ui(factorial_of_30, 30);
-    fmpz_init_set_strview<ALLOW_STRING_MODIFICATION>(big_int, input);
+    fmpz_init_set_mutable_str(big_int, input, 4, input.size()-4);
     REQUIRE(fmpz_cmp(big_int, factorial_of_30) == 0);
-    REQUIRE(input == "265252859812191058636308480000000");
+    REQUIRE(input == "x = 265252859812191058636308480000000");
 
     fmpz_clear(big_int);
     fmpz_clear(factorial_of_30);

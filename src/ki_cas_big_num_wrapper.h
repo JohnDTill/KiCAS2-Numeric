@@ -32,19 +32,19 @@ size_t fmpz_sizeinbase10upperbound(const fmpz_t val) noexcept;
 /// Take the absolute value of an fmpq_t in place
 void fmpq_abs_inplace(fmpq_t val) noexcept;
 
-/// Flag indicating string can be modified
-/// @warning The underlying string must be null-terminated and not accessed in another thread. Neither
-///          precondition is verifiable.
-inline constexpr bool ALLOW_STRING_MODIFICATION = false;
-
-/// Flag indicating string inputs should not be mutated
-inline constexpr bool MEMORY_SAFE = true;
+/// Set an mpz_t from a string.
+void mpz_init_set_strview(mpz_t f, std::string_view str);
 
 /// Set an mpz_t from a string.
-template<bool constant_str=true> void mpz_init_set_strview(mpz_t f, std::string_view str);
+/// @warning The underlying string is temporarily modified; it is not safe to access in another thread.
+void mpz_init_set_mutable_str(mpz_t f, std::string& str, size_t pos, size_t len);
 
 /// Set an fmpz_t from a string.
-template<bool constant_str=true> void fmpz_init_set_strview(fmpz_t f, std::string_view str);
+void fmpz_init_set_strview(fmpz_t f, std::string_view str);
+
+/// Set an fmpz_t from a string.
+/// @warning The underlying string is temporarily modified; it is not safe to access in another thread.
+void fmpz_init_set_mutable_str(fmpz_t f, std::string& str, size_t pos, size_t len);
 
 /// Append an mpz_t to the end of the string
 void write_big_int(std::string& str, const mpz_t val);
