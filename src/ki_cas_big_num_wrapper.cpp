@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include "ki_cas_native_integer.h"
+#include "ki_cas_native_rational.h"
 
 #ifndef NDEBUG
 #include <memory.h>
@@ -19,9 +20,46 @@ void mpz_neg_inplace(mpz_t rop) noexcept {
     rop->_mp_size *= -1;
 }
 
-void mpz_init_set_ui_mul_ui(mpz_t ans, mp_limb_t lhs, mp_limb_t rhs) {
-    mpz_init_set_ui(ans, lhs);
-    mpz_mul_ui(ans, ans, rhs);
+void fmpz_10_pow_ui(fmpz_t f, ulong rhs) {
+    constexpr size_t powers_of_ten[] = {
+        1,
+        10,
+        100,
+        1000,
+        10000,
+        100000,
+        1000000,
+        10000000,
+        100000000,
+        1000000000uLL,
+#if defined(__x86_64__) || defined(__aarch64__) || defined( _WIN64 )  // 64-bit
+        10000000000,
+        100000000000,
+        1000000000000,
+        10000000000000,
+        100000000000000,
+        1000000000000000,
+        10000000000000000,
+        100000000000000000,
+        1000000000000000000,
+        10000000000000000000uLL,
+#endif
+    };
+
+    // Check this rather than specify it to make sure the macro worked
+    static_assert(sizeof(powers_of_ten)/sizeof(size_t) == std::numeric_limits<size_t>::digits10+1);
+
+    if(rhs <= std::numeric_limits<size_t>::digits10){
+        fmpz_init_set_ui(f, powers_of_ten[rhs]);
+    }else{
+        fmpz_init(f);
+        _fmpz_promote(f);
+        mpz_ui_pow_ui(COEFF_TO_PTR(*f), 10, rhs);
+    }
+}
+
+void fmpz_10_pow_fmpz(fmpz_t f, const fmpz_t rhs) {
+    fmpz_pow_fmpz(f, FMPZ_TEN, rhs);
 }
 
 size_t mpz_sizeinbase10upperbound(const mpz_t val) noexcept {
@@ -60,43 +98,6 @@ void mpz_init_set_strview(mpz_t f, std::string_view str) {
     }
 }
 
-void mpz_init_set_mutable_str(mpz_t f, std::string& str, size_t pos, size_t len) {
-    #ifndef NDEBUG
-    assert(str.size() >= len);
-    for(const char ch : std::string_view(str.data()+pos, len)) assert(ch >= '0' && ch <= '9');
-    assert(!(str[pos+len] >= '0' && str[pos+len] <= '9'));
-    #endif
-
-    if(str.size() <= std::numeric_limits<size_t>::digits10){
-        mpz_init_set_ui(f, knownfit_str2int(std::string_view(str.data()+pos, len)));
-#if (!defined(__x86_64__) && !defined(__aarch64__) && !defined(_WIN64)) || !defined(_MSC_VER)
-    }else if(str.size() <= std::numeric_limits<WideType>::digits10){
-        const DoubleInt val = knownfit_str2wideint(std::string_view(str.data()+pos, len));
-        mpz_init(f);
-        fmpz ptr = PTR_TO_COEFF(f);
-        fmpz_set_uiui(&ptr, val.high, val.low);
-#endif
-    }else if(pos+len < str.size()){
-        const size_t end_index = pos+len;
-
-        // Backup the character at the end, and replace with '\0' so that GMP knows to stop parsing the int.
-        const char backup = str[end_index];
-        str[end_index] = '\0';
-
-        // Parse the null-terminated str
-        mpz_init(f);
-        const auto code = mpz_set_str(f, str.data()+pos, 10);
-        assert(code == 0);
-
-        // Restore the original str
-        str[end_index] = backup;
-    }else{
-        mpz_init(f);
-        const auto code = mpz_set_str(f, str.data()+pos, 10);
-        assert(code == 0);
-    }
-}
-
 static constexpr size_t base10Digits(size_t number) noexcept {
     size_t digits = 1;
     while((number /= 10) != 0) digits++;
@@ -127,53 +128,8 @@ fmpz fmpz_from_strview(std::string_view str) {
     }
 }
 
-fmpz fmpz_from_mutable_str(std::string& str, size_t pos, size_t len) {
-    #ifndef NDEBUG
-    assert(str.size() >= len);
-    for(const char ch : std::string_view(str.data()+pos, len)) assert(ch >= '0' && ch <= '9');
-    assert(!(str[pos+len] >= '0' && str[pos+len] <= '9'));
-    #endif
-
-    if(str.size() < COEFF_MAX_DIGITS){
-        return knownfit_str2int(std::string_view(str.data()+pos, len));
-#if (!defined(__x86_64__) && !defined(__aarch64__) && !defined(_WIN64)) || !defined(_MSC_VER)
-    }else if(str.size() <= std::numeric_limits<WideType>::digits10){
-        const DoubleInt val = knownfit_str2wideint(std::string_view(str.data()+pos, len));
-        fmpz f = 0;
-        fmpz_set_uiui(&f, val.high, val.low);
-        return f;
-#endif
-    }else if(pos + len < str.size()){
-        const size_t end_index = pos+len;
-
-        // Backup the character at the end, and replace with '\0' so that GMP knows to stop parsing the int.
-        const char backup = str[end_index];
-        str[end_index] = '\0';
-
-        // Parse the null-terminated str
-        fmpz f = 0;
-        const auto code = fmpz_set_str(&f, str.data()+pos, 10);
-        assert(code == 0);
-
-        // Restore the original str
-        str[end_index] = backup;
-
-        return f;
-    }else{
-        fmpz f = 0;
-        const auto code = fmpz_set_str(&f, str.data()+pos, 10);
-        assert(code == 0);
-
-        return f;
-    }
-}
-
 void fmpz_init_set_strview(fmpz_t f, std::string_view str) {
     *f = fmpz_from_strview(str);
-}
-
-void fmpz_init_set_mutable_str(fmpz_t f, std::string& str, size_t pos, size_t len) {
-    *f = fmpz_from_mutable_str(str, pos, len);
 }
 
 void write_big_int(std::string& str, const mpz_t val) {
@@ -236,7 +192,6 @@ template<bool typeset_fraction> void write_big_rational(std::string& str, const 
         const size_t start_index = str.size();
         str.resize(str.size() + max_digits);
 
-        // TODO: depending on benchmarks, switch this function
         _fmpq_get_str(str.data() + start_index, base, num, den);
 
         // Resize where prior allocation exceeded the actual need
@@ -247,75 +202,72 @@ template<bool typeset_fraction> void write_big_rational(std::string& str, const 
 template void write_big_rational<false>(std::string&, const fmpq_t);
 template void write_big_rational<true>(std::string&, const fmpq_t);
 
-fmpq fmpq_from_decimaltail_str(std::string_view str) {
-    assert(str.at(0) == '.');
-    #ifndef NDEBUG
-    for(size_t i = 1; i < str.size(); i++) assert(str[i] >= '0' && str[i] <= '9');
-    #endif
+inline static fmpq conv(NativeRational val) {
+    fmpq ans {0, 0};
+    fmpz_init_set_ui(&ans.num, val.num);
+    fmpz_init_set_ui(&ans.den, val.den);
 
-    // Omit trailing zeros
-    size_t back_index = str.size()-1;
-    while(str[back_index] == '0') back_index--;
-    if(back_index == 0) return *FMPQ_ZERO;
-
-    fmpz num = fmpz_from_strview(str.substr(1, back_index));
-
-    // The denominator has factors (2 * 5)^len(digits)
-    // Because we have eliminated all factors of 10 from the numerator,
-    // the common factors are, mutually exclusively:
-    //   Instances of 2
-    //   Instances of 5
-
-    if(str.back() == '5'){
-        const size_t den_num_2_factors = str.size()-1;
-
-        fmpz reduced_num = 0;
-        fmpz_remove(&reduced_num, &num, FMPZ_FIVE);
-        fmpz extracted_5_factors = 0;
-        fmpz_divexact(&extracted_5_factors, &num, &reduced_num);
-
-        fmpz den = 0;
-        fmpz_pow_ui(&den, FMPZ_FIVE, str.size()-1);
-        fmpz_mul_2exp(&den, &den, den_num_2_factors);
-        fmpz_divexact(&den, &den, &extracted_5_factors);
-
-        fmpz_clear(&num);
-        fmpz_clear(&extracted_5_factors);
-
-        return {reduced_num, den};
-    }else{
-        const size_t den_num_5_factors = str.size()-1;
-        const size_t num_2_factors = fmpz_val2(&num);
-        const size_t den_num_2_factors = den_num_5_factors - num_2_factors;
-
-        fmpz_tdiv_q_2exp(&num, &num, num_2_factors);
-
-        fmpz den = 0;
-        fmpz_pow_ui(&den, FMPZ_FIVE, den_num_5_factors);
-        fmpz_mul_2exp(&den, &den, den_num_2_factors);
-
-        return {num, den};
-    }
+    return ans;
 }
 
 fmpq fmpq_from_decimal_str(std::string_view str) {
-    return fmpq_from_decimal_str(str, str.find('.'));
+    const auto decimal_index = str.find('.');
+    if(decimal_index == std::string::npos) return {fmpz_from_strview(str), *FMPZ_ONE};
+    else return fmpq_from_decimal_str(str, decimal_index);
 }
 
 fmpq fmpq_from_decimal_str(std::string_view str, size_t decimal_index) {
-    assert(str.at(decimal_index) == '.');
-    assert(str.length() >= 2);
-    #ifndef NDEBUG
-    for(size_t i = 0; i < str.size(); i++) assert((str[i] >= '0' && str[i] <= '9') || (i == decimal_index));
-    #endif
+    NativeRational result;
+    if(ckd_strdecimal2rat(&result, str, decimal_index) == false)
+        return conv(result);
 
-    if(decimal_index == 0) return fmpq_from_decimaltail_str(str);
-
-    fmpq tail = fmpq_from_decimaltail_str(str.substr(decimal_index));
     fmpz lead = fmpz_from_strview(str.substr(0, decimal_index));
-    fmpq_add_fmpz(&tail, &tail, &lead);
 
-    return tail;
+    fmpz num = fmpz_from_strview(str.substr(decimal_index+1));
+    fmpz den = 0;
+    fmpz_10_pow_ui(&den, str.size()-(decimal_index+1));
+    fmpq_t tail {{num, den}};
+    fmpq_canonicalise(tail);
+
+    fmpq_add_fmpz(tail, tail, &lead);
+    fmpz_clear(&lead);
+
+    return *tail;
+}
+
+fmpq fmpq_from_scientific_str(std::string_view str) {
+    NativeRational result;
+    if(ckd_strscientific2rat(&result, str) == false)
+        return conv(result);
+
+    const size_t e_index = str.find('e');
+    assert(e_index != std::string::npos);
+
+    fmpq lhs = fmpq_from_decimal_str(str.substr(0, e_index));
+
+    size_t exp_start = e_index + 1;
+
+    const bool hasNegativePrefix = (str[exp_start] == '-');
+    const bool hasPositivePrefix = (str[exp_start] == '+');
+    exp_start += (hasNegativePrefix || hasPositivePrefix);
+    const std::string_view exp_digits = str.substr(exp_start);
+
+    fmpz tenPower = 0;
+
+    size_t native_exp;
+    if(ckd_str2int(&native_exp, exp_digits) == false){
+        fmpz_10_pow_ui(&tenPower, native_exp);
+    }else{
+        fmpz exp = fmpz_from_strview(exp_digits);
+        fmpz_10_pow_fmpz(&tenPower, &exp);
+        fmpz_clear(&exp);
+    }
+
+    const auto op = hasNegativePrefix ? &fmpq_div_fmpz : &fmpq_mul_fmpz;
+    (*op)(&lhs, &lhs, &tenPower);
+    fmpz_clear(&tenPower);
+
+    return lhs;
 }
 
 #ifndef NDEBUG

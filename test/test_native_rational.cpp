@@ -344,6 +344,10 @@ TEST_CASE( "ckd_strdecimaltail2rat" ) {
         REQUIRE(result.num == 1);
         REQUIRE(result.den == 25);
 
+        REQUIRE_FALSE(ckd_strdecimaltail2rat(&result, ".64"));
+        REQUIRE(result.num == 16);
+        REQUIRE(result.den == 25);
+
         constexpr size_t large_fit_num = (MAX / 16) * 16;  // Reduces to fit, despite 10^len(digits) too big
         const std::string large_fit = '.' + std::to_string(large_fit_num);
         REQUIRE_FALSE(ckd_strdecimaltail2rat(&result, large_fit));
@@ -392,6 +396,10 @@ TEST_CASE( "ckd_strdecimal2rat" ) {
     SECTION("Factor of 2"){
         REQUIRE_FALSE(ckd_strdecimal2rat(&result, "2.2"));
         REQUIRE(result.num == 11);
+        REQUIRE(result.den == 5);
+
+        REQUIRE_FALSE(ckd_strdecimal2rat(&result, "123.4"));
+        REQUIRE(result.num == 617);
         REQUIRE(result.den == 5);
     }
 

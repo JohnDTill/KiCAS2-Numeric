@@ -22,8 +22,6 @@ set(SRC_FILES
     src/ki_cas_native_integer.h
     src/ki_cas_native_rational.h
     src/ki_cas_native_rational.cpp
-    src/ki_cas_str_conversions.cpp
-    src/ki_cas_str_conversions.h
     src/ki_cas_typesetting_flags.h
 )
 
@@ -51,8 +49,7 @@ add_executable(Tests
     test/test_big_num_wrapper.cpp
     test/test_native_float.cpp
     test/test_native_integer.cpp
-    test/test_native_rational.cpp
-    test/test_str_conversions.cpp)
+    test/test_native_rational.cpp)
 target_include_directories(Tests PUBLIC src)
 target_link_libraries(Tests PRIVATE ki_cas_numeric_lib Catch2::Catch2WithMain)
 add_test(NAME Tests COMMAND Tests)

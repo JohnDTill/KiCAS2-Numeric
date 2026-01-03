@@ -39,7 +39,11 @@ bool mpz_is_neg(const mpz_t op) noexcept;
 /// Reverse the sign of an mpz_t in place
 void mpz_neg_inplace(mpz_t rop) noexcept;
 
-void mpz_init_set_ui_mul_ui(mpz_t ans, ulong lhs, ulong rhs);  // TODO: reconsider this
+/// Find 10 to the power of a size_t value
+void fmpz_10_pow_ui(fmpz_t f, ulong rhs);
+
+/// Find 10 to the power of an fmpz_t value
+void fmpz_10_pow_fmpz(fmpz_t f, const fmpz_t rhs);
 
 /// Return an overestimate of how many base10 digits are required to express the mpz_t
 size_t mpz_sizeinbase10upperbound(const mpz_t val) noexcept;
@@ -53,23 +57,11 @@ void fmpq_abs_inplace(fmpq_t val) noexcept;
 /// Set an mpz_t from a string.
 void mpz_init_set_strview(mpz_t f, std::string_view str);
 
-/// Set an mpz_t from a string.
-/// @warning The underlying string is temporarily modified; it is not safe to access in another thread.
-void mpz_init_set_mutable_str(mpz_t f, std::string& str, size_t pos, size_t len);
-
 /// Create an mpz_t from a string.
 fmpz fmpz_from_strview(std::string_view str);
 
-/// Create an fmpz_t from a string.
-/// @warning The underlying string is temporarily modified; it is not safe to access in another thread.
-fmpz fmpz_from_mutable_str(std::string& str, size_t pos, size_t len);
-
 /// Set an fmpz_t from a string.
 void fmpz_init_set_strview(fmpz_t f, std::string_view str);
-
-/// Set an fmpz_t from a string.
-/// @warning The underlying string is temporarily modified; it is not safe to access in another thread.
-void fmpz_init_set_mutable_str(fmpz_t f, std::string& str, size_t pos, size_t len);
 
 /// Append an mpz_t to the end of the string
 void write_big_int(std::string& str, const mpz_t val);
@@ -77,14 +69,16 @@ void write_big_int(std::string& str, const mpz_t val);
 /// Append an fmpq_t to the end of the string
 template<bool typeset_fraction=false> void write_big_rational(std::string& str, const fmpq_t val);
 
-/// Create an fmpq_t from a string of the form `'.' ['0'-'9']*`.
-fmpq fmpq_from_decimaltail_str(std::string_view str);
-
 /// Create an fmpq_t from a string of the form `(['0'-'9']+ '.' ['0'-'9']*) | ['0'-'9']* '.' ['0'-'9']+`..
 fmpq fmpq_from_decimal_str(std::string_view str);
 
 /// Create an fmpq_t from a string of the form `(['0'-'9']+ '.' ['0'-'9']*) | ['0'-'9']* '.' ['0'-'9']+`..
 fmpq fmpq_from_decimal_str(std::string_view str, size_t decimal_index);
+
+/// Create an fmpq_t from a string of the form:
+/// `['0'-'9']+ ('.' ['0'-'9']*)? 'e' ('+' | '-')? ['0'-'9']+`.
+/// or `'.' ['0'-'9']+ 'e' ('+' | '-')? ['0'-'9']+`
+fmpq fmpq_from_scientific_str(std::string_view str);
 
 #ifndef NDEBUG
 bool isAllGmpMemoryFreed() noexcept;

@@ -84,6 +84,23 @@ TEST_CASE( "mpz_is_neg" ) {
     DEBUG_REQUIRE(isAllGmpMemoryFreed());
 }
 
+TEST_CASE( "fmpz_10_pow_ui" ) {
+    fmpz_t val;
+    fmpz_10_pow_ui(val, 3);
+    REQUIRE(fmpz_get_ui(val) == 1'000);
+    fmpz_clear(val);
+
+    fmpz_10_pow_ui(val, 9);
+    REQUIRE(fmpz_get_ui(val) == 1'000'000'000);
+    fmpz_clear(val);
+
+    fmpz_10_pow_ui(val, 30);
+    REQUIRE(fmpz_get_str(nullptr, 10, val) == std::string("1000000000000000000000000000000"));
+    fmpz_clear(val);
+
+    DEBUG_REQUIRE(isAllGmpMemoryFreed());
+}
+
 TEST_CASE( "mpz_sizeinbase10upperbound" ) {
     mpz_t val;
 
@@ -166,45 +183,6 @@ TEST_CASE( "mpz_init_set_strview" ) {
     DEBUG_REQUIRE(isAllGmpMemoryFreed());
 }
 
-TEST_CASE( "mpz_init_set_mutable_str" ) {
-    mpz_t big_int;
-    std::string input;
-
-    input = "0";
-    mpz_init_set_mutable_str(big_int, input, 0, 1);
-    REQUIRE(mpz_get_si(big_int) == 0);
-    REQUIRE(input == "0");
-    mpz_clear(big_int);
-    DEBUG_REQUIRE(isAllGmpMemoryFreed());
-
-    input = "42";
-    mpz_init_set_mutable_str(big_int, input, 0, 2);
-    REQUIRE(mpz_get_si(big_int) == 42);
-    REQUIRE(input == "42");
-    mpz_clear(big_int);
-    DEBUG_REQUIRE(isAllGmpMemoryFreed());
-
-    input = std::to_string(MAX);
-    mpz_init_set_mutable_str(big_int, input, 0, input.size());
-    char buffer[128];
-    REQUIRE(mpz_get_str(buffer, 10, big_int) == std::to_string(MAX));
-    REQUIRE(input == std::to_string(MAX));
-    mpz_clear(big_int);
-    DEBUG_REQUIRE(isAllGmpMemoryFreed());
-
-    input = "x = 265252859812191058636308480000000";
-    mpz_t factorial_of_30;
-    mpz_init(factorial_of_30);
-    mpz_fac_ui(factorial_of_30, 30);
-    mpz_init_set_mutable_str(big_int, input, 4, input.size()-4);
-    REQUIRE(mpz_cmp(big_int, factorial_of_30) == 0);
-    REQUIRE(input == "x = 265252859812191058636308480000000");
-
-    mpz_clear(big_int);
-    mpz_clear(factorial_of_30);
-    DEBUG_REQUIRE(isAllGmpMemoryFreed());
-}
-
 TEST_CASE( "fmpz_init_set_strview" ) {
     fmpz_t big_int;
 
@@ -228,44 +206,6 @@ TEST_CASE( "fmpz_init_set_strview" ) {
     fmpz_fac_ui(factorial_of_30, 30);
     fmpz_init_set_strview(big_int, "265252859812191058636308480000000");
     REQUIRE(fmpz_cmp(big_int, factorial_of_30) == 0);
-
-    fmpz_clear(big_int);
-    fmpz_clear(factorial_of_30);
-    DEBUG_REQUIRE(isAllGmpMemoryFreed());
-}
-
-TEST_CASE( "fmpz_init_set_mutable_str" ) {
-    fmpz_t big_int;
-    std::string input;
-
-    input = "0";
-    fmpz_init_set_mutable_str(big_int, input, 0, 1);
-    REQUIRE(fmpz_get_si(big_int) == 0);
-    REQUIRE(input == "0");
-    fmpz_clear(big_int);
-    DEBUG_REQUIRE(isAllGmpMemoryFreed());
-
-    input = "42";
-    fmpz_init_set_mutable_str(big_int, input, 0, 2);
-    REQUIRE(fmpz_get_si(big_int) == 42);
-    REQUIRE(input == "42");
-    fmpz_clear(big_int);
-    DEBUG_REQUIRE(isAllGmpMemoryFreed());
-
-    input = std::to_string(MAX);
-    fmpz_init_set_mutable_str(big_int, input, 0, input.size());
-    REQUIRE(fmpz_get_ui(big_int) == MAX);
-    REQUIRE(input == std::to_string(MAX));
-    fmpz_clear(big_int);
-    DEBUG_REQUIRE(isAllGmpMemoryFreed());
-
-    input = "x = 265252859812191058636308480000000";
-    fmpz_t factorial_of_30;
-    fmpz_init(factorial_of_30);
-    fmpz_fac_ui(factorial_of_30, 30);
-    fmpz_init_set_mutable_str(big_int, input, 4, input.size()-4);
-    REQUIRE(fmpz_cmp(big_int, factorial_of_30) == 0);
-    REQUIRE(input == "x = 265252859812191058636308480000000");
 
     fmpz_clear(big_int);
     fmpz_clear(factorial_of_30);
@@ -378,8 +318,165 @@ TEST_CASE( "fmpq_from_decimal_str" ) {
     *big_rat = fmpq_from_decimal_str("2.2");
     REQUIRE(fmpz_get_ui(fmpq_numref(big_rat)) == 11);
     REQUIRE(fmpz_get_ui(fmpq_denref(big_rat)) == 5);
+    fmpq_clear(big_rat);
 
     *big_rat = fmpq_from_decimal_str("2.5");
     REQUIRE(fmpz_get_ui(fmpq_numref(big_rat)) == 5);
     REQUIRE(fmpz_get_ui(fmpq_denref(big_rat)) == 2);
+    fmpq_clear(big_rat);
+
+    DEBUG_REQUIRE(isAllGmpMemoryFreed());
+}
+
+TEST_CASE( "fmpq_from_scientific_str" ){
+    fmpq_t big_rat;
+
+    SECTION("Integer Positive Exponent"){
+        *big_rat = fmpq_from_scientific_str("1e2");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 100);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 1);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("0e2");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 0);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 1);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("23e1");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 230);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 1);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("0000000000000000000000000000000000000000000000001234e5");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 123400000);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 1);
+        fmpq_clear(big_rat);
+    }
+
+    SECTION("Integer Negative Exponent"){
+        *big_rat = fmpq_from_scientific_str("1e-2");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 1);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 100);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("0e-2");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 0);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 1);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("23e-1");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 23);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 10);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("0000000000000000000000000000000000000000000000004321e-5");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 4321);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 100000);
+        fmpq_clear(big_rat);
+    }
+
+    SECTION("Decimal Positive Exponent To Integer"){
+        *big_rat = fmpq_from_scientific_str("1.2e3");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 1200);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 1);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("0.2e3");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 200);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 1);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("000000000000000000000000000000000000000000000000.2e3");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 200);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 1);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("0.200000000000000000000000000000000000000000000000e3");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 200);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 1);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("0.0e3");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 0);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 1);
+        fmpq_clear(big_rat);
+    }
+
+    SECTION("Decimal Positive Exponent To Rational"){
+        *big_rat = fmpq_from_scientific_str("1.23e1");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 123);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 10);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("0.002e2");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 1);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 5);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("0000000000000000000000000000000000000000000000000.005e2");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 1);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 2);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str(".0050000000000000000000000000000000000000000000000000e2");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 1);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 2);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("0.00000e1");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 0);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 1);
+        fmpq_clear(big_rat);
+    }
+
+    SECTION("Decimal Negative Exponent Of Greater Magnitude"){
+        *big_rat = fmpq_from_scientific_str("1.23e-1");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 123);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 1000);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("0.1e-2");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 1);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 1000);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("0000000000000000000000000000000000000000000000000.5e-1");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 1);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 20);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str(".50000000000000000000000000000000000000000000000000e-1");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 1);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 20);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("0.00000e-2");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 0);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 1);
+        fmpq_clear(big_rat);
+    }
+
+    SECTION("Decimal Negative Exponent Of Lesser Magnitude"){
+        *big_rat = fmpq_from_scientific_str("12.3e-1");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 123);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 100);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("123.4e-2");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 617);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 500);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("0000000000000000000000000000000000000000000000012.3e-1");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 123);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 100);
+        fmpq_clear(big_rat);
+
+        *big_rat = fmpq_from_scientific_str("12.300000000000000000000000000000000000000000000000e-1");
+        REQUIRE(fmpz_get_si(fmpq_numref(big_rat)) == 123);
+        REQUIRE(fmpz_get_si(fmpq_denref(big_rat)) == 100);
+        fmpq_clear(big_rat);
+    }
+
+    DEBUG_REQUIRE(isAllGmpMemoryFreed());
 }

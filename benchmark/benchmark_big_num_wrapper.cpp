@@ -6,17 +6,11 @@
 using namespace KiCAS2;
 
 TEST_CASE("fmpz_init_set_strview (tiny)") {
-    std::string str = "1337";
+    const std::string str = "1337";
 
     BENCHMARK_ADVANCED( "fmpz_init_set_strview" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
         meter.measure([&](){fmpz_init_set_strview(big_int, str);});
-        fmpz_clear(big_int);
-    };
-
-    BENCHMARK_ADVANCED( "fmpz_init_set_mutable_str" )(Catch::Benchmark::Chronometer meter) {
-        fmpz_t big_int;
-        meter.measure([&](){fmpz_init_set_mutable_str(big_int, str, 0, 4);});
         fmpz_clear(big_int);
     };
 
@@ -28,17 +22,11 @@ TEST_CASE("fmpz_init_set_strview (tiny)") {
 };
 
 TEST_CASE("fmpz_init_set_strview (Flint word size)") {
-    std::string str = std::to_string(COEFF_MAX);
+    const std::string str = std::to_string(COEFF_MAX);
 
     BENCHMARK_ADVANCED( "fmpz_init_set_strview" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
         meter.measure([&](){fmpz_init_set_strview(big_int, str);});
-        fmpz_clear(big_int);
-    };
-
-    BENCHMARK_ADVANCED( "fmpz_init_set_strview<ALLOW_STRING_MODIFICATION>" )(Catch::Benchmark::Chronometer meter) {
-        fmpz_t big_int;
-        meter.measure([&](){fmpz_init_set_mutable_str(big_int, str, 0, str.size());});
         fmpz_clear(big_int);
     };
 
@@ -50,17 +38,11 @@ TEST_CASE("fmpz_init_set_strview (Flint word size)") {
 };
 
 TEST_CASE("fmpz_init_set_strview (Flint word size x2)") {
-    std::string str = std::to_string(std::numeric_limits<size_t>::max()) + "00";
+    const std::string str = std::to_string(std::numeric_limits<size_t>::max()) + "00";
 
     BENCHMARK_ADVANCED( "fmpz_init_set_strview" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
         meter.measure([&](){fmpz_init_set_strview(big_int, str);});
-        fmpz_clear(big_int);
-    };
-
-    BENCHMARK_ADVANCED( "fmpz_init_set_strview<ALLOW_STRING_MODIFICATION>" )(Catch::Benchmark::Chronometer meter) {
-        fmpz_t big_int;
-        meter.measure([&](){fmpz_init_set_mutable_str(big_int, str, 0, str.size());});
         fmpz_clear(big_int);
     };
 
@@ -72,19 +54,13 @@ TEST_CASE("fmpz_init_set_strview (Flint word size x2)") {
 };
 
 TEST_CASE("fmpz_init_set_strview (Flint word size x3)") {
-    std::string str = std::to_string(std::numeric_limits<size_t>::max())
-                    + std::to_string(std::numeric_limits<size_t>::max())
-                    + "0000";
+    const std::string str = std::to_string(std::numeric_limits<size_t>::max())
+                          + std::to_string(std::numeric_limits<size_t>::max())
+                          + "0000";
 
     BENCHMARK_ADVANCED( "fmpz_init_set_strview" )(Catch::Benchmark::Chronometer meter) {
         fmpz_t big_int;
         meter.measure([&](){fmpz_init_set_strview(big_int, str);});
-        fmpz_clear(big_int);
-    };
-
-    BENCHMARK_ADVANCED( "fmpz_init_set_strview<ALLOW_STRING_MODIFICATION>" )(Catch::Benchmark::Chronometer meter) {
-        fmpz_t big_int;
-        meter.measure([&](){fmpz_init_set_mutable_str(big_int, str, 0, str.size());});
         fmpz_clear(big_int);
     };
 
@@ -96,17 +72,11 @@ TEST_CASE("fmpz_init_set_strview (Flint word size x3)") {
 };
 
 TEST_CASE("mpz_init_set_strview (tiny)") {
-    std::string str = "1337";
+    const std::string str = "1337";
 
     BENCHMARK_ADVANCED( "mpz_init_set_strview" )(Catch::Benchmark::Chronometer meter) {
         mpz_t big_int;
         meter.measure([&](){mpz_init_set_strview(big_int, str);});
-        mpz_clear(big_int);
-    };
-
-    BENCHMARK_ADVANCED( "mpz_init_set_strview<ALLOW_STRING_MODIFICATION>" )(Catch::Benchmark::Chronometer meter) {
-        mpz_t big_int;
-        meter.measure([&](){mpz_init_set_mutable_str(big_int, str, 0, 4);});
         mpz_clear(big_int);
     };
 
@@ -118,17 +88,11 @@ TEST_CASE("mpz_init_set_strview (tiny)") {
 };
 
 TEST_CASE("mpz_init_set_strview (word size)") {
-    std::string str = std::to_string(COEFF_MAX);
+    const std::string str = std::to_string(COEFF_MAX);
 
     BENCHMARK_ADVANCED( "mpz_init_set_strview" )(Catch::Benchmark::Chronometer meter) {
         mpz_t big_int;
         meter.measure([&](){mpz_init_set_strview(big_int, str);});
-        mpz_clear(big_int);
-    };
-
-    BENCHMARK_ADVANCED( "mpz_init_set_strview<ALLOW_STRING_MODIFICATION>" )(Catch::Benchmark::Chronometer meter) {
-        mpz_t big_int;
-        meter.measure([&](){mpz_init_set_mutable_str(big_int, str, 0, str.size());});
         mpz_clear(big_int);
     };
 
@@ -140,17 +104,11 @@ TEST_CASE("mpz_init_set_strview (word size)") {
 };
 
 TEST_CASE("mpz_init_set_strview (Flint word size x2)") {
-    std::string str = std::to_string(std::numeric_limits<size_t>::max()) + "00";
+    const std::string str = std::to_string(std::numeric_limits<size_t>::max()) + "00";
 
     BENCHMARK_ADVANCED( "mpz_init_set_strview" )(Catch::Benchmark::Chronometer meter) {
         mpz_t big_int;
         meter.measure([&](){mpz_init_set_strview(big_int, str);});
-        mpz_clear(big_int);
-    };
-
-    BENCHMARK_ADVANCED( "mpz_init_set_strview<ALLOW_STRING_MODIFICATION>" )(Catch::Benchmark::Chronometer meter) {
-        mpz_t big_int;
-        meter.measure([&](){mpz_init_set_mutable_str(big_int, str, 0, str.size());});
         mpz_clear(big_int);
     };
 
@@ -162,19 +120,13 @@ TEST_CASE("mpz_init_set_strview (Flint word size x2)") {
 };
 
 TEST_CASE("mpz_init_set_strview (Flint word size x3)") {
-    std::string str = std::to_string(std::numeric_limits<size_t>::max())
-                    + std::to_string(std::numeric_limits<size_t>::max())
-                    + "0000";
+    const std::string str = std::to_string(std::numeric_limits<size_t>::max())
+                          + std::to_string(std::numeric_limits<size_t>::max())
+                          + "0000";
 
     BENCHMARK_ADVANCED( "mpz_init_set_strview" )(Catch::Benchmark::Chronometer meter) {
         mpz_t big_int;
         meter.measure([&](){mpz_init_set_strview(big_int, str);});
-        mpz_clear(big_int);
-    };
-
-    BENCHMARK_ADVANCED( "mpz_init_set_strview<ALLOW_STRING_MODIFICATION>" )(Catch::Benchmark::Chronometer meter) {
-        mpz_t big_int;
-        meter.measure([&](){mpz_init_set_mutable_str(big_int, str, 0, str.size());});
         mpz_clear(big_int);
     };
 
@@ -190,13 +142,13 @@ static fmpq naiveDecimalParse(std::string_view str){
     if(decimal_index == std::string::npos) return {fmpz_from_strview(str), *FMPZ_ONE};
 
     fmpz lead = fmpz_from_strview(str.substr(0, decimal_index));
+
     fmpz num = fmpz_from_strview(str.substr(decimal_index+1));
     fmpz den = 0;
-    fmpz ten = 10;
-    fmpz_pow_ui(&den, &ten, str.size()-(decimal_index+1));
-
+    fmpz_10_pow_ui(&den, str.size()-(decimal_index+1));
     fmpq_t tail {num, den};
     fmpq_canonicalise(tail);
+
     fmpq_add_fmpz(tail, tail, &lead);
     fmpz_clear(&lead);
 
@@ -274,6 +226,16 @@ TEST_CASE("fmpq_from_decimal_str (factors of 2)") {
 TEST_CASE("fmpq_from_scientific_str (int result)") {
     const std::string str = "2.998e8";
 
+    BENCHMARK_ADVANCED( "fmpq_from_scientific_str" )(Catch::Benchmark::Chronometer meter) {
+        fmpq big_rat;
+        meter.measure([&](){big_rat = fmpq_from_scientific_str(str);});
+
+        REQUIRE(big_rat.num == 299800000);
+        REQUIRE(big_rat.den == 1);
+
+        fmpq_clear(&big_rat);
+    };
+
     BENCHMARK_ADVANCED( "naiveScientificParse" )(Catch::Benchmark::Chronometer meter) {
         fmpq big_rat;
         meter.measure([&](){big_rat = naiveScientificParse(str);});
@@ -287,6 +249,16 @@ TEST_CASE("fmpq_from_scientific_str (int result)") {
 
 TEST_CASE("fmpq_from_scientific_str (rational result)") {
     const std::string str = "0.0625e-2";
+
+    BENCHMARK_ADVANCED( "fmpq_from_scientific_str" )(Catch::Benchmark::Chronometer meter) {
+        fmpq big_rat;
+        meter.measure([&](){big_rat = fmpq_from_scientific_str(str);});
+
+        REQUIRE(big_rat.num == 1);
+        REQUIRE(big_rat.den == 1600);
+
+        fmpq_clear(&big_rat);
+    };
 
     BENCHMARK_ADVANCED( "naiveScientificParse" )(Catch::Benchmark::Chronometer meter) {
         fmpq big_rat;

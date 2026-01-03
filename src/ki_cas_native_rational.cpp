@@ -551,7 +551,7 @@ bool ckd_strdecimaltail2rat(NativeRational* result, std::string_view str) noexce
         const uint8_t den_num_5_factors = digits.size();
         uint8_t den_num_2_factors = digits.size();
 
-        while(num % 2 == 0){
+        while(num % 2 == 0 && den_num_2_factors){
             num /= 2;
             den_num_2_factors--;
         }
