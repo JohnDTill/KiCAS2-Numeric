@@ -83,7 +83,7 @@ void mpz_init_set_strview(mpz_t f, std::string_view str) {
 
     if(str.size() <= std::numeric_limits<size_t>::digits10){
         mpz_init_set_ui(f, knownfit_str2int(str));
-    #if (!defined(__x86_64__) && !defined(__aarch64__) && !defined(_WIN64)) || !defined(_MSC_VER)
+    #if !defined(_MSC_VER)
     }else if(str.size() <= std::numeric_limits<WideType>::digits10){
         const DoubleInt val = knownfit_str2wideint(str);
         mpz_init(f);
