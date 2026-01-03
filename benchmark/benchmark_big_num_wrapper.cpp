@@ -185,3 +185,117 @@ TEST_CASE("mpz_init_set_strview (Flint word size x3)") {
         mpz_clear(big_int);
     };
 };
+
+static fmpq naiveDecimalParse(std::string_view str){
+    const size_t decimal_index = str.find('.');
+    if(decimal_index == std::string::npos) return {fmpz_from_strview(str), *FMPZ_ONE};
+
+    fmpz lead = fmpz_from_strview(str.substr(0, decimal_index));
+    fmpz num = fmpz_from_strview(str.substr(decimal_index+1));
+    fmpz den = 0;
+    fmpz ten = 10;
+    fmpz_pow_ui(&den, &ten, str.size()-(decimal_index+1));
+
+    fmpq_t tail {num, den};
+    fmpq_canonicalise(tail);
+    fmpq_add_fmpz(tail, tail, &lead);
+    fmpz_clear(&lead);
+
+    return *tail;
+}
+
+static fmpq naiveScientificParse(std::string_view str){
+    const size_t e_index = str.find('e');
+    if(e_index == std::string::npos) return naiveDecimalParse(str);
+    size_t exp_start = e_index + 1;
+
+    const bool hasNegativePrefix = (str[exp_start] == '-');
+    const bool hasPositivePrefix = (str[exp_start] == '+');
+
+    fmpq val = naiveDecimalParse(str.substr(0, e_index));
+    const auto op = hasNegativePrefix ? &fmpq_div_fmpz : &fmpq_mul_fmpz;
+    exp_start += (hasNegativePrefix || hasPositivePrefix);
+
+    fmpz exponent = fmpz_from_strview(str.substr(exp_start));
+    fmpz_pow_fmpz(&exponent, FMPZ_TEN, &exponent);
+    (*op)(&val, &val, &exponent);
+    fmpz_clear(&exponent);
+
+    return val;
+}
+
+TEST_CASE("fmpq_from_decimal_str (factors of 5)") {
+    const std::string str = "2.125";
+
+    BENCHMARK_ADVANCED( "fmpq_from_decimal_str" )(Catch::Benchmark::Chronometer meter) {
+        fmpq big_rat;
+        meter.measure([&](){big_rat = fmpq_from_decimal_str(str);});
+
+        REQUIRE(big_rat.num == 17);
+        REQUIRE(big_rat.den == 8);
+
+        fmpq_clear(&big_rat);
+    };
+
+    BENCHMARK_ADVANCED( "naiveDecimalParse" )(Catch::Benchmark::Chronometer meter) {
+        fmpq big_rat;
+        meter.measure([&](){big_rat = naiveDecimalParse(str);});
+
+        REQUIRE(big_rat.num == 17);
+        REQUIRE(big_rat.den == 8);
+
+        fmpq_clear(&big_rat);
+    };
+}
+
+TEST_CASE("fmpq_from_decimal_str (factors of 2)") {
+    const std::string str = "3.008";
+
+    BENCHMARK_ADVANCED( "fmpq_from_decimal_str" )(Catch::Benchmark::Chronometer meter) {
+        fmpq big_rat;
+        meter.measure([&](){big_rat = fmpq_from_decimal_str(str);});
+
+        REQUIRE(big_rat.num == 376);
+        REQUIRE(big_rat.den == 125);
+
+        fmpq_clear(&big_rat);
+    };
+
+    BENCHMARK_ADVANCED( "naiveDecimalParse" )(Catch::Benchmark::Chronometer meter) {
+        fmpq big_rat;
+        meter.measure([&](){big_rat = naiveDecimalParse(str);});
+
+        REQUIRE(big_rat.num == 376);
+        REQUIRE(big_rat.den == 125);
+
+        fmpq_clear(&big_rat);
+    };
+}
+
+TEST_CASE("fmpq_from_scientific_str (int result)") {
+    const std::string str = "2.998e8";
+
+    BENCHMARK_ADVANCED( "naiveScientificParse" )(Catch::Benchmark::Chronometer meter) {
+        fmpq big_rat;
+        meter.measure([&](){big_rat = naiveScientificParse(str);});
+
+        REQUIRE(big_rat.num == 299800000);
+        REQUIRE(big_rat.den == 1);
+
+        fmpq_clear(&big_rat);
+    };
+}
+
+TEST_CASE("fmpq_from_scientific_str (rational result)") {
+    const std::string str = "0.0625e-2";
+
+    BENCHMARK_ADVANCED( "naiveScientificParse" )(Catch::Benchmark::Chronometer meter) {
+        fmpq big_rat;
+        meter.measure([&](){big_rat = naiveScientificParse(str);});
+
+        REQUIRE(big_rat.num == 1);
+        REQUIRE(big_rat.den == 1600);
+
+        fmpq_clear(&big_rat);
+    };
+}

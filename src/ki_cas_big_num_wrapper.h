@@ -15,6 +15,24 @@
 
 namespace KiCAS2 {
 
+/// fmpz_t representing 0
+inline constexpr fmpz_t FMPZ_ZERO = {0};
+
+/// fmpz_t representing 1
+inline constexpr fmpz_t FMPZ_ONE = {1};
+
+/// fmpz_t representing 5
+inline constexpr fmpz_t FMPZ_FIVE = {5};
+
+/// fmpz_t representing 10
+inline constexpr fmpz_t FMPZ_TEN = {10};
+
+/// fmpq_t representing 0
+inline constexpr fmpq_t FMPQ_ZERO = {{*FMPZ_ZERO, *FMPZ_ONE}};
+
+/// fmpq_t representing 1
+inline constexpr fmpq_t FMPQ_ONE = {{*FMPZ_ONE, *FMPZ_ONE}};
+
 /// Determine if an mpz_t is strictly negative, value in [-∞, 0)
 bool mpz_is_neg(const mpz_t op) noexcept;
 
@@ -39,6 +57,13 @@ void mpz_init_set_strview(mpz_t f, std::string_view str);
 /// @warning The underlying string is temporarily modified; it is not safe to access in another thread.
 void mpz_init_set_mutable_str(mpz_t f, std::string& str, size_t pos, size_t len);
 
+/// Create an mpz_t from a string.
+fmpz fmpz_from_strview(std::string_view str);
+
+/// Create an fmpz_t from a string.
+/// @warning The underlying string is temporarily modified; it is not safe to access in another thread.
+fmpz fmpz_from_mutable_str(std::string& str, size_t pos, size_t len);
+
 /// Set an fmpz_t from a string.
 void fmpz_init_set_strview(fmpz_t f, std::string_view str);
 
@@ -51,6 +76,15 @@ void write_big_int(std::string& str, const mpz_t val);
 
 /// Append an fmpq_t to the end of the string
 template<bool typeset_fraction=false> void write_big_rational(std::string& str, const fmpq_t val);
+
+/// Create an fmpq_t from a string of the form `'.' ['0'-'9']*`.
+fmpq fmpq_from_decimaltail_str(std::string_view str);
+
+/// Create an fmpq_t from a string of the form `(['0'-'9']+ '.' ['0'-'9']*) | ['0'-'9']* '.' ['0'-'9']+`..
+fmpq fmpq_from_decimal_str(std::string_view str);
+
+/// Create an fmpq_t from a string of the form `(['0'-'9']+ '.' ['0'-'9']*) | ['0'-'9']* '.' ['0'-'9']+`..
+fmpq fmpq_from_decimal_str(std::string_view str, size_t decimal_index);
 
 #ifndef NDEBUG
 bool isAllGmpMemoryFreed() noexcept;

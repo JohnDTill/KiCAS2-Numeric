@@ -1,6 +1,8 @@
 #ifndef KI_CAS_STR_CONVERSIONS_H
 #define KI_CAS_STR_CONVERSIONS_H
 
+// TODO: finish revising these functions and delete this file
+
 #ifdef _MSC_VER
 #include <malloc.h>
 #endif

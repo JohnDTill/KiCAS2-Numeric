@@ -10,7 +10,7 @@ include_directories("${FLINT_ROOT}/include")
 link_directories("${FLINT_ROOT}/lib")
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(gmp REQUIRED IMPORTED_TARGET gmp mpfr)
+pkg_check_modules(gmp REQUIRED IMPORTED_TARGET gmp mpfr)  # TODO: pin lib versions
 find_package(Threads REQUIRED)
 
 set(SRC_FILES

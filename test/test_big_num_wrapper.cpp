@@ -41,6 +41,19 @@ TEST_CASE( "GMP memory leak detection mechanism" ) {
     DEBUG_REQUIRE(isAllGmpMemoryFreed());
 }
 
+TEST_CASE( "constants" ) {
+    REQUIRE(fmpz_get_si(FMPZ_ZERO) == 0);
+    REQUIRE(fmpz_get_si(FMPZ_ONE) == 1);
+    REQUIRE(fmpz_get_si(FMPZ_FIVE) == 5);
+    REQUIRE(fmpz_get_si(FMPZ_TEN) == 10);
+
+    REQUIRE(fmpz_get_si(fmpq_numref(FMPQ_ZERO)) == 0);
+    REQUIRE(fmpz_get_si(fmpq_denref(FMPQ_ZERO)) == 1);
+
+    REQUIRE(fmpz_get_si(fmpq_numref(FMPQ_ONE)) == 1);
+    REQUIRE(fmpz_get_si(fmpq_denref(FMPQ_ONE)) == 1);
+}
+
 TEST_CASE( "mpz_neg_inplace" ) {
     mpz_t val;
     mpz_init_set_ui(val, 42);
@@ -357,4 +370,16 @@ TEST_CASE( "write_big_rational" ) {
     fmpq_clear(big_num);
 
     DEBUG_REQUIRE(isAllGmpMemoryFreed());
+}
+
+TEST_CASE( "fmpq_from_decimal_str" ) {
+    fmpq_t big_rat;
+
+    *big_rat = fmpq_from_decimal_str("2.2");
+    REQUIRE(fmpz_get_ui(fmpq_numref(big_rat)) == 11);
+    REQUIRE(fmpz_get_ui(fmpq_denref(big_rat)) == 5);
+
+    *big_rat = fmpq_from_decimal_str("2.5");
+    REQUIRE(fmpz_get_ui(fmpq_numref(big_rat)) == 5);
+    REQUIRE(fmpz_get_ui(fmpq_denref(big_rat)) == 2);
 }
