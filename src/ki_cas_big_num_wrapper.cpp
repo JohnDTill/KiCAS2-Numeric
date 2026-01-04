@@ -277,7 +277,8 @@ static std::allocator<size_t> allocator;
 static std::unordered_set<const void*> allocated_memory;
 static std::shared_mutex allocation_mutex;
 
-void* __leakTrackingAlloc(size_t n) {
+// GMP memory functions
+static void* leakTrackingAlloc(size_t n) {
     allocation_mutex.lock_shared();
     size_t* allocated = allocator.allocate(n);
     if(allocated){
@@ -289,25 +290,101 @@ void* __leakTrackingAlloc(size_t n) {
     return allocated;
 }
 
-void __leakTrackingFree(void* p, size_t old) noexcept {
+static void leakTrackingFree(void* p, size_t old) noexcept {
     allocation_mutex.lock_shared();
     allocated_memory.erase(p);
     allocator.deallocate(reinterpret_cast<size_t*>(p), old);
     allocation_mutex.unlock_shared();
 }
 
-void* __leakTrackingRealloc(void* p, size_t old, size_t n) {
+static void* leakTrackingRealloc(void* p, size_t old, size_t n) {
     void* reallocated = nullptr;
     if(n != 0){
-        reallocated = __leakTrackingAlloc(n);
+        reallocated = leakTrackingAlloc(n);
         memcpy(reallocated, p, sizeof(size_t)*std::min(old, n));
     }
-    __leakTrackingFree(p, old);
+    leakTrackingFree(p, old);
     return reallocated;
 }
 
+// Flint memory functions
+static void* flintLeakTrackingAlloc(size_t n) {
+    allocation_mutex.lock_shared();
+    void* allocated = std::malloc(n);
+    if(allocated){
+        const auto result = allocated_memory.insert(allocated);
+        assert(result.second);
+    }
+    allocation_mutex.unlock_shared();
+
+    return allocated;
+}
+
+static void* flintLeakTrackingCalloc(size_t num, size_t size) {
+    allocation_mutex.lock_shared();
+    void* allocated = std::calloc(num, size);
+    if(allocated){
+        const auto result = allocated_memory.insert(allocated);
+        assert(result.second);
+    }
+    allocation_mutex.unlock_shared();
+
+    return allocated;
+}
+
+static void flintLeakTrackingFree(void* p) noexcept {
+    allocation_mutex.lock_shared();
+    allocated_memory.erase(p);
+    std::free(p);
+    allocation_mutex.unlock_shared();
+}
+
+static void* flintLeakTrackingRealloc(void* p, size_t n) {
+    void* reallocated = nullptr;
+
+    if(n != 0){
+        allocation_mutex.lock_shared();
+        allocated_memory.erase(p);
+        reallocated = std::realloc(p, n);
+        if(reallocated){
+            const auto result = allocated_memory.insert(reallocated);
+            assert(result.second);
+        }
+        allocation_mutex.unlock_shared();
+    }
+
+    return reallocated;
+}
+
+struct Init {
+    Init(){
+        mp_set_memory_functions(
+            leakTrackingAlloc,
+            leakTrackingRealloc,
+            leakTrackingFree);
+
+        __flint_set_memory_functions(
+            flintLeakTrackingAlloc,
+            flintLeakTrackingCalloc,
+            flintLeakTrackingRealloc,
+            flintLeakTrackingFree);
+    }
+};
+
+static Init memoryTrackingInit;
+
 bool isAllGmpMemoryFreed() noexcept {
     return allocated_memory.empty();
+}
+
+void resetMemoryTracking() noexcept {
+    allocated_memory.clear();
+}
+
+bool isAllGmpMemoryFreed_resetOnFalse() noexcept {
+    const bool is_free = isAllGmpMemoryFreed();
+    if(!is_free) resetMemoryTracking();
+    return is_free;
 }
 #endif
 
