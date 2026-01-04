@@ -10,6 +10,14 @@ using namespace KiCAS2;
 
 static constexpr size_t MAX = std::numeric_limits<size_t>::max();
 
+#ifdef CONFIRM_32BIT_COMPILATION
+#include <iostream>
+TEST_CASE( "confirm_32bit" ) {
+    REQUIRE(sizeof(size_t)*8 == 32);
+    std::cout << "Confirmed program under test is 32-bit." << std::endl;
+}
+#endif
+
 TEST_CASE( "ckd_add" ) {
     size_t result;
 

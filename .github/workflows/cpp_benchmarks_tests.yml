@@ -34,24 +34,6 @@ jobs:
           - os: windows-11-arm
             compiler: msvc
             triplet: arm64-windows-dynamic
-          # - os: windows-latest
-          #   compiler: mingw
-          #   triplet: x64-mingw-dynamic  # EVENTUALLY: get MinGW working
-          # - os: ubuntu-latest
-          #   compiler: gcc
-          #   arch: x86
-          #   # triplet: x86-linux-dynamic  # EVENTUALLY: get dynamic x86 working
-          #   triplet: x86-linux
-          # - os: ubuntu-latest
-          #   compiler: clang
-          #   arch: x86
-          #   # triplet: x86-linux-dynamic  # EVENTUALLY: get dynamic x86 working
-          #   triplet: x86-linux
-          # - os: windows-latest
-          #   compiler: mingw
-          #   arch: x86
-          #   # triplet: x86-mingw-dynamic  # EVENTUALLY: get dynamic Windows x86 working
-          #   triplet: x86-mingw-static
     runs-on: ${{ matrix.os }}
     env:
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_binary_cache
