@@ -44,6 +44,11 @@ set_target_properties(ki_cas_numeric_lib PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS O
 # Testing setup
 find_package(Catch2 CONFIG REQUIRED)
 
+OPTION(CONFIRM_32BIT "Activate a test confirming 32-bit compilation" OFF)
+IF(CONFIRM_32BIT)
+    ADD_DEFINITIONS(-DCONFIRM_32BIT_COMPILATION)
+ENDIF(CONFIRM_32BIT)
+
 enable_testing()
 add_executable(Tests
     test/test_big_num_wrapper.cpp
