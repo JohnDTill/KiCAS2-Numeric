@@ -72,7 +72,7 @@ TEST_CASE("delayed normalisation") {
         REQUIRE_FALSE(overflow);
     };
 
-    BENCHMARK_ADVANCED( "mpq_t" )(Catch::Benchmark::Chronometer meter) {
+    BENCHMARK_ADVANCED( "fmpq_t" )(Catch::Benchmark::Chronometer meter) {
         meter.measure([&](){
             fmpq_t result;
             fmpq_init(result);

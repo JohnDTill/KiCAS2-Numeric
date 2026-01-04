@@ -4,6 +4,11 @@
   "version-string": "0.0.1",
   "dependencies": [
     "pkgconf",
+    {
+      "name": "gmp",
+      "features": ["fat"],
+      "platform": "!windows | mingw"
+    },
     "flint",
     "catch2"
   ]
