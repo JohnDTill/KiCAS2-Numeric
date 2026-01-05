@@ -120,8 +120,6 @@ jobs:
           if [ "${{ matrix.arch }}" = "x86" ]; then
             if [ "${{ matrix.compiler }}" = "msvc" ]; then
               CMAKE_FLAGS+=("-A" "Win32")
-            else
-              CMAKE_FLAGS+=("-D" "CMAKE_C_FLAGS=-m32" "-D" "CMAKE_CXX_FLAGS=-m32")
             fi
 
             CMAKE_FLAGS+=("-D" "CONFIRM_32BIT=ON")
