@@ -81,7 +81,8 @@ fmpq fmpq_from_decimal_str(std::string_view str, size_t decimal_index);
 fmpq fmpq_from_scientific_str(std::string_view str);
 
 #if !defined(NDEBUG) && defined(TEST_GMP_LEAKS)
-bool isAllGmpMemoryFreed() noexcept;
+bool isAllGmpMemoryFreed() noexcept;  /// Return if all allocated GMP memory has been freed
+bool isAllGmpMemoryFreed_resetIfNot() noexcept;  /// Return if freed and reset to avoid cascading test failures
 #define LEAK_CHECK_REQUIRE(x) REQUIRE(x)
 #define LEAK_CHECK_REQUIRE_FALSE(x) REQUIRE_FALSE(x)
 #else

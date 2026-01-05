@@ -323,6 +323,13 @@ static Init memoryTrackingInit;
 bool isAllGmpMemoryFreed() noexcept {
     return allocated_memory.empty();
 }
+
+bool isAllGmpMemoryFreed_resetIfNot() noexcept {
+    const bool all_freed = isAllGmpMemoryFreed();
+    if(!all_freed) allocated_memory.clear();
+    return all_freed;
+}
+
 #endif
 
 }
