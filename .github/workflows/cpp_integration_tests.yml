@@ -22,6 +22,9 @@ jobs:
             compiler: msvc
             arch: x86
             triplet: x86-windows-dynamic
+          - os: windows-latest
+            compiler: mingw
+            triplet: x64-mingw-dynamic
           - os: ubuntu-24.04-arm
             compiler: gcc
             triplet: arm64-linux-dynamic
@@ -48,8 +51,8 @@ jobs:
             export CC=clang
             export CXX=clang++
           elif [[ "${{ matrix.compiler }}" == "mingw" ]]; then
-            export CC=x86_64-w64-mingw32-gcc
-            export CXX=x86_64-w64-mingw32-g++
+            export CC=gcc
+            export CXX=g++
           fi
 
           mkdir ${GITHUB_WORKSPACE}/vcpkg_binary_cache
@@ -84,7 +87,7 @@ jobs:
         run: |
           CMAKE_FLAGS=()
           if [ "${{ matrix.arch }}" = "x86" ]; then
-            if [ "$RUNNER_OS" = "Windows" ]; then
+            if [ "${{ matrix.compiler }}" = "msvc" ]; then
               CMAKE_FLAGS+=("-A" "Win32")
             else
               CMAKE_FLAGS+=("-D" "CMAKE_C_FLAGS=-m32" "-D" "CMAKE_CXX_FLAGS=-m32")
@@ -102,7 +105,7 @@ jobs:
         shell: bash
         run: |
           BUILD_CONFIG_CMAKE=""
-          if [ "$RUNNER_OS" = "Windows" ]; then
+          if [ "${{ matrix.compiler }}" = "msvc" ]; then
             BUILD_CONFIG_CMAKE="--config RelWithDebInfo"
           fi
 
@@ -112,7 +115,7 @@ jobs:
         shell: bash
         run: |
           BUILD_CONFIG_CTEST=""
-          if [ "$RUNNER_OS" = "Windows" ]; then
+          if [ "${{ matrix.compiler }}" = "msvc" ]; then
             BUILD_CONFIG_CTEST="-C RelWithDebInfo"
           fi
 
