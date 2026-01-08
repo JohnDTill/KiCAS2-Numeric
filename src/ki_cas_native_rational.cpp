@@ -515,6 +515,7 @@ bool ckd_strdecimaltail2rat(NativeRational* result, std::string_view str) noexce
             num = num_div_5;
             assert(den_num_5_factors > 0);
             den_num_5_factors--;
+            if(den_num_5_factors == 0) break;
 
             num_div_5 = num / 5;
             num_mod_5 = num % 5;
