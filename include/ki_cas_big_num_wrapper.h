@@ -15,23 +15,11 @@
 
 namespace KiCAS2 {
 
-/// fmpz_t representing 0
-inline constexpr fmpz_t FMPZ_ZERO = {0};
-
 /// fmpz_t representing 1
 inline constexpr fmpz_t FMPZ_ONE = {1};
 
-/// fmpz_t representing 5
-inline constexpr fmpz_t FMPZ_FIVE = {5};
-
 /// fmpz_t representing 10
 inline constexpr fmpz_t FMPZ_TEN = {10};
-
-/// fmpq_t representing 0
-inline constexpr fmpq_t FMPQ_ZERO = {{*FMPZ_ZERO, *FMPZ_ONE}};
-
-/// fmpq_t representing 1
-inline constexpr fmpq_t FMPQ_ONE = {{*FMPZ_ONE, *FMPZ_ONE}};
 
 /// Determine if an mpz_t is strictly negative, value in [-∞, 0)
 bool mpz_is_neg(const mpz_t op) noexcept;

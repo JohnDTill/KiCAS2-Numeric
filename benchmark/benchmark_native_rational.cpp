@@ -1,8 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/benchmark/catch_benchmark.hpp>
 
-#include "../src/ki_cas_native_rational.h"
-#include "../src/ki_cas_big_num_wrapper.h"
+#include "ki_cas_native_rational.h"
+#include "ki_cas_big_num_wrapper.h"
 
 using namespace KiCAS2;
 

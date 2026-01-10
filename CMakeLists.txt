@@ -13,16 +13,21 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(gmp REQUIRED IMPORTED_TARGET gmp mpfr)
 find_package(Threads REQUIRED)
 
+set(INC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+include_directories(${INC})
+
 set(SRC_FILES
-    src/ki_cas_big_num_wrapper.cpp
-    src/ki_cas_big_num_wrapper.h
-    src/ki_cas_native_float.cpp
-    src/ki_cas_native_float.h
-    src/ki_cas_native_integer.cpp
-    src/ki_cas_native_integer.h
-    src/ki_cas_native_rational.h
-    src/ki_cas_native_rational.cpp
-    src/ki_cas_typesetting_flags.h
+    ${SRC}/ki_cas_big_num_wrapper.cpp
+    ${INC}/ki_cas_big_num_wrapper.h
+    ${SRC}/ki_cas_native_float.cpp
+    ${INC}/ki_cas_native_float.h
+    ${SRC}/ki_cas_native_integer.cpp
+    ${INC}/ki_cas_native_integer.h
+    ${SRC}/ki_cas_native_rational.cpp
+    ${INC}/ki_cas_native_rational.h
+    ${INC}/ki_cas_typesetting_flags.h
 )
 
 add_library(ki_cas_numeric_lib SHARED ${SRC_FILES})
@@ -34,12 +39,19 @@ foreach(X Flint::flint gmp mpfr)
         message(FATAL_ERROR "Must dynamically link ${X} for LGPL compliance with permissive licenses")
     endif()
 endforeach()
-target_link_libraries(ki_cas_numeric_lib PkgConfig::gmp flint)
-target_link_libraries(ki_cas_numeric_lib Threads::Threads)
+target_link_libraries(ki_cas_numeric_lib PUBLIC PkgConfig::gmp flint)
+target_link_libraries(ki_cas_numeric_lib PRIVATE Threads::Threads)
 
 set_target_properties(ki_cas_numeric_lib PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(ki_cas_numeric_lib PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 set_target_properties(ki_cas_numeric_lib PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
+add_library(KiCAS2::Numeric ALIAS ki_cas_numeric_lib)
+target_include_directories(ki_cas_numeric_lib
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
 
 # Testing setup
 find_package(Catch2 CONFIG REQUIRED)

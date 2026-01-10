@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "../src/ki_cas_native_integer.h"
+#include "ki_cas_native_integer.h"
 
 #include <cmath>
 #include <limits>
