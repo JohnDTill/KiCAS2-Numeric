@@ -54,6 +54,7 @@ target_include_directories(ki_cas_numeric_lib
 )
 
 # Testing setup
+if(PROJECT_IS_TOP_LEVEL)
 find_package(Catch2 CONFIG REQUIRED)
 
 ADD_DEFINITIONS(-DTEST_GMP_LEAKS)
@@ -85,3 +86,4 @@ add_executable(Benchmarks
 set_property(TARGET Benchmarks PROPERTY INTERPROCEDURAL_OPTIMIZATION OFF)
 target_include_directories(Benchmarks PUBLIC src)
 target_link_libraries(Benchmarks PRIVATE ki_cas_numeric_lib Catch2::Catch2WithMain)
+endif(PROJECT_IS_TOP_LEVEL)
